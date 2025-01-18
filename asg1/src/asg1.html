@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<!--
+Zachary Messer
+zmesser@ucsc.edu
+-->
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>Assignment 1: Paint Program</title>
+        <style>
+            button {
+                padding: 10px;
+                font-weight: bold;
+            }
+            canvas {
+                margin-bottom: 20px;
+            }
+        </style>
+    </head>
+
+    <body onload="main()">
+        <canvas id="webgl" width="400" height="400">
+            Please use the browser supporting "canvas".
+        </canvas>
+
+        <div>
+            <button style="margin-right: 4px;" onclick="clearShapes()">Clear</button>
+            <button onclick="drawPicture()">Draw Picture</button>
+        </div>
+        <table>
+            <tr>
+                <td style="vertical-align: top">
+                    <p><strong>Shape</strong></p>
+                    <table>
+                        <tr>
+                            <td><label for="size">Size</label></td>
+                            <td><input type="range" id="size" name="size" value="15" min="1" max="50" /></td>
+                        </tr>
+                        <tr>
+                            <td><label for="verts">Circle Quality</label></td>
+                            <td><input type="range" id="verts" name="verts" value="8" min="3" max="30" /></td>
+                        </tr>
+                        <tr>
+                            <td><label for="brush">Brush</label></td>
+                            <td><select id="brush" name="brush">
+                                <option value="square">Square</option>
+                                <option value="triangle">Triangle</option>
+                                <option value="circle">Circle</option>
+                                <option value="jelly">Jelly</option>
+                            </select></td>
+                        </tr>
+                    </table>
+                </td>
+
+                <td style="vertical-align: top">
+                    <p><strong>Color</strong></p>
+                    <table>
+                        <tr>
+                            <td><label for="red">Red</label></td>
+                            <td><input type="range" id="red" name="red" value="255" max="255" /></td>
+                        </tr>
+                        <tr>
+                            <td><label for="green">Green</label></td>
+                            <td><input type="range" id="green" name="green" value="255" max="255" /></td>
+                        </tr>
+                        <tr>
+                            <td><label for="blue">Blue</label></td>
+                            <td><input type="range" id="blue" name="blue" value="255" max="255" /></td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+
+        <br />
+        <div style="margin-left: 20px;">
+            <details>
+                <summary>Notes for Graders</summary>
+                <p><strong>Awesome points:</strong> Check out "Jelly" in the brush dropdown! Bigger brush sizes work better.</p>
+                <p>I went through the guide videos after trying the assignment on my own, so my solutions for drawing triangles and circles differ from the ones shown.</p>
+                <p>Here are my paper sketches for the drawing, with the pose based on a picture of my cat:</p>
+                <img src="drawing.png" width="400" />
+                <img src="reference.png" width="400" />
+            </details>
+        </div>
+
+        <script src="../lib/webgl-utils.js"></script>
+        <script src="../lib/webgl-debug.js"></script>
+        <script src="../lib/cuon-utils.js"></script>
+        <script src="Point.js"></script>
+        <script src="Triangle.js"></script>
+        <script src="Circle.js"></script>
+        <script src="Picture.js"></script>
+        <script src="Jelly.js"></script>
+        <script src="asg1.js"></script>
+    </body>
+</html>
