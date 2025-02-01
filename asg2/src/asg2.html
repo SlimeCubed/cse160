@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>Assignment 2: Blocky Animal</title>
+        <style>
+            button {
+                padding: 10px;
+                font-weight: bold;
+            }
+            body {
+                margin: 0;
+            }
+            table {
+                width: 100%;
+                table-layout: fixed;
+            }
+            input {
+                vertical-align: middle;
+            }
+            label {
+                vertical-align: middle;
+                margin-right: 10px;
+            }
+        </style>
+    </head>
+
+    <body onload="main()">
+        <canvas id="webgl" width="400" height="400">
+            Please use the browser supporting "canvas".
+        </canvas>
+        <br />
+        <table>
+            <tr>
+                <td>
+                    <p>FPS: <span id="fps">...</span></p>
+                </td>
+                <td>
+                    <label for="angleA">Joint 1</label><input type="range" value="0" id="angleA"/><br/>
+                    <label for="angleB">Joint 2</label><input type="range" value="0" id="angleB"/>
+                </td>
+                <td>
+                    <label for="center">Keep Centered</label><input type="checkbox" id="center" onchange="updateCentered()"/>
+                    <br/>
+                    <label for="pause">Pause</label><input type="checkbox" id="pause" onchange="updatePaused()"/>
+                </td>
+            </tr>
+        </table>
+        <div style="margin-left: 20px;">
+            <details id="notes" ontoggle="viewNotes()">
+                <summary><strong>Notes for Graders</strong></summary>
+                <p><strong>Click and drag</strong> to pan, <strong>scroll</strong> to zoom. <strong>Shift click</strong> on the ground to have the crow caw at your mouse!</p>
+                <p>The crow's feet and feathers are third-level joints.</p>
+                <p>I wanted to make the bird only out of cubes, so the ground is a non-cube primitive.</p>
+            </details>
+        </div>
+
+        <script src="../lib/cuon-matrix-cse160.js"></script>
+        <script src="../lib/cuon-utils.js"></script>
+        <script src="asg2.js"></script>
+    </body>
+</html>
