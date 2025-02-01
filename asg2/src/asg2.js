@@ -515,13 +515,12 @@ function animateIdle(dt) {
     anim.newMoveDelay = Math.max(anim.newMoveDelay - dt, 0);
 
     if (anim.newMoveDelay == 0) {
-        let x = Math.random() * 30 - 15;
-        let z = Math.random() * 30 - 15;
-        const walkDist = Math.sqrt(Math.pow(x - pose.bodyPos.elements[0], 2) + Math.pow(z - pose.bodyPos.elements[2], 2));
-        while (walkDist < 10) {
+        let x, z, walkDist;
+        do {
             x = Math.random() * 30 - 15;
             z = Math.random() * 30 - 15;
-        }
+            walkDist = Math.sqrt(Math.pow(x - pose.bodyPos.elements[0], 2) + Math.pow(z - pose.bodyPos.elements[2], 2));
+        } while (walkDist < 10);
 
         anim.moveTo = new Vector3([x, 0, z]);
     }
