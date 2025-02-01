@@ -48,8 +48,8 @@ void main() {
 /** @type {WebGLBuffer} */ let cubeModel = null;
 /** @type {WebGLBuffer} */ let circleModel = null;
 /** @type {number} */ const fov = 70;
-/** @type {Array<number>} */ const currentColor = [0,0,0,1];
-/** @type {Vector3} */ const lightDir = new Vector3([0.3, -1, -0.2]).normalize();
+/** @type {Array<number>} */ const currentColor = [0, 0, 0, 1];
+/** @type {Vector3} */ const lightDir = new Vector3([0.3, -1, -0.2,]).normalize();
 /** @type {number} */ let mouseX = 0;
 /** @type {number} */ let mouseY = 0;
 /** @type {number} */ let frames = 0;
@@ -69,9 +69,9 @@ const colors = {
     feathers: [0.2, 0.2, 0.23],
     legs: [0.4, 0.4, 0.4],
     talons: [0.2, 0.2, 0.2],
-    eyes: [0.55,0.45,0.4],
-    eyeShines: [0.5,0.5,0.5],
-    pupils: [0,0,0],
+    eyes: [0.55, 0.45, 0.4],
+    eyeShines: [0.5, 0.5, 0.5],
+    pupils: [0, 0, 0],
     beak: [0.1, 0.1, 0.1],
 };
 const pose = {
@@ -79,10 +79,13 @@ const pose = {
     wingsDown: 1,
     tailSplay: 0,
     tailDown: 0,
-    footPos: [new Vector4([1.5, floorY, 0, 1]), new Vector4([-1.5, floorY, 0, 1])],
+    footPos: [
+        new Vector4([1.5, floorY, 0, 1]),
+        new Vector4([-1.5, floorY, 0, 1]),
+    ],
     footAngle: [40, 40],
     talonCurl: [0, 0],
-    bodyPos: new Vector3([0,1.5,0]),
+    bodyPos: new Vector3([0, 1.5, 0]),
     bodyElevation: -40,
     bodyAzimuth: 0,
     bodyTilt: 0,
@@ -94,14 +97,20 @@ const pose = {
 };
 const anim = {
     lastTime: 0,
-    footFrom: [new Vector3(pose.footPos[0].elements), new Vector3(pose.footPos[1].elements)],
-    footTo: [new Vector3(pose.footPos[0].elements), new Vector3(pose.footPos[1].elements)],
+    footFrom: [
+        new Vector3(pose.footPos[0].elements),
+        new Vector3(pose.footPos[1].elements),
+    ],
+    footTo: [
+        new Vector3(pose.footPos[0].elements),
+        new Vector3(pose.footPos[1].elements),
+    ],
     footMove: [1, 1],
     turnHeadDelay: 0,
-    lookTarget: new Vector3([0,0,10]),
+    lookTarget: new Vector3([0, 0, 10]),
     lookSideToSide: 0,
     lookTilt: 0,
-    vel: new Vector3([0,0,0]),
+    vel: new Vector3([0, 0, 0]),
     stepTimer: 0,
     stepCounter: 0,
     moveTo: null,
@@ -117,7 +126,7 @@ const anim = {
 
     startled: false,
     startleTimer: 0,
-    startleDir: new Vector3([0,0,1]),
+    startleDir: new Vector3([0, 0, 1]),
 };
 
 /// CROW ANIMATION CODE ///
@@ -150,8 +159,7 @@ function animateCrow() {
 
     if (anim.startled) {
         animateStartle(dt);
-    }
-    else if (anim.moveTo !== null && !anim.paused) {
+    } else if (anim.moveTo !== null && !anim.paused) {
         animateWalk(dt);
     } else if (!anim.paused) {
         animateIdle(dt);
@@ -166,8 +174,7 @@ function startStartle() {
 
     anim.moveTo = null;
     anim.startled = true;
-    anim.startleDir.set(mousePos)
-        .sub(pose.bodyPos);
+    anim.startleDir.set(mousePos).sub(pose.bodyPos);
     anim.startleDir.elements[1] = 0;
     anim.startleDir.normalize();
     anim.lookTarget.set(mousePos).sub(pose.bodyPos);
@@ -175,7 +182,7 @@ function startStartle() {
         anim.lookTarget.elements[0] = anim.startleDir.elements[0] * 8;
         anim.lookTarget.elements[2] = anim.startleDir.elements[2] * 8;
     }
-    anim.lookTarget.add(pose.bodyPos)
+    anim.lookTarget.add(pose.bodyPos);
     anim.startleTimer = 0;
     anim.blinkDelay = 3;
     anim.newLookDelay = 5;
@@ -188,9 +195,15 @@ function startStartle() {
 function animateStartle(dt) {
     const temp = getVec3();
     const t = anim.startleTimer;
-    pose.wingsOpen = (Math.sin(t * 16) * 0.5 + 0.5) * Math.max(1 - t, 0) * 0.5 + 0.5 * Math.max(1 - t, 0);
-    pose.wingsDown = (Math.cos(t * 16) * -0.5 + 0.5) * Math.max(1 - t, 0) + Math.pow(t / 1.5, 3);
-    pose.beakOpen = Math.min(anim.startleTimer * 6, 1) * Math.max(1 - anim.startleTimer * 2, 0);
+    pose.wingsOpen =
+        (Math.sin(t * 16) * 0.5 + 0.5) * Math.max(1 - t, 0) * 0.5 +
+        0.5 * Math.max(1 - t, 0);
+    pose.wingsDown =
+        (Math.cos(t * 16) * -0.5 + 0.5) * Math.max(1 - t, 0) +
+        Math.pow(t / 1.5, 3);
+    pose.beakOpen =
+        Math.min(anim.startleTimer * 6, 1) *
+        Math.max(1 - anim.startleTimer * 2, 0);
 
     const bodyDir = getVec3();
     bodyDir.elements[0] = Math.sin(pose.bodyAzimuth * Math.PI / 180);
@@ -222,14 +235,16 @@ function animateStartle(dt) {
 
     // Move body
     pose.bodyPos.elements[1] = anim.baseBodyHeight + bodyJump * (1 - bodyJump) * 4 * 2;
-    
+
     if (t < 0.45) {
         temp.set(anim.startleDir);
         temp.mul(dt * -25 * Math.pow(1 - t / 0.45, 1.5));
         pose.bodyPos.add(temp);
     }
 
-    pose.bodyElevation = anim.baseBodyElevation + Math.sin(t * Math.PI * 2) * Math.pow(Math.max(1 - t / 1.5, 0), 2) * 45;
+    pose.bodyElevation =
+        anim.baseBodyElevation +
+        Math.sin(t * Math.PI * 2) * Math.pow(Math.max(1 - t / 1.5, 0), 2) * 45;
     pose.tailSplay = Math.min(t * 8, 1) * Math.max(1 - t * 2, 0);
     pose.tailDown = pose.tailSplay * 2;
 
@@ -270,13 +285,13 @@ function animateLook(dt) {
 
     anim.newLookDelay = Math.max(0, anim.newLookDelay - dt);
     anim.lookTargetAge += dt;
-    
+
     // Choose a new point to look at
     if (anim.newLookDelay === 0 || forceNewLook) {
         anim.newLookDelay = Math.random() * 2.5 + 0.5;
         anim.lookTargetAge = 0;
-        anim.lookTilt = Math.random() * 90 - 45
-        
+        anim.lookTilt = Math.random() * 90 - 45;
+
         const bodyPerp = getVec3();
         bodyPerp.elements[0] = bodyDir.elements[2];
         bodyPerp.elements[2] = -bodyDir.elements[0];
@@ -287,8 +302,7 @@ function animateLook(dt) {
             .mul(30 * Math.random() + 10)
             .add(bodyPerp);
 
-        anim.lookTarget.set(pose.bodyPos)
-            .add(newLookOffset);
+        anim.lookTarget.set(pose.bodyPos).add(newLookOffset);
         anim.lookTarget.elements[1] = floorY + Math.random() * 5;
 
         freeVec3(bodyPerp);
@@ -297,25 +311,53 @@ function animateLook(dt) {
 
     // Update head angles
     const invBodyMatrix = getMat4()
-        .setTranslate(0,0,-3)
-        .rotate(-pose.bodyElevation, 1,0,0)
-        .rotate(-pose.bodyTilt, 0,0,1)
-        .rotate(-pose.bodyAzimuth, 0,1,0)
-        .translate(-pose.bodyPos.elements[0], -pose.bodyPos.elements[1], -pose.bodyPos.elements[2]);
+        .setTranslate(0, 0, -3)
+        .rotate(-pose.bodyElevation, 1, 0, 0)
+        .rotate(-pose.bodyTilt, 0, 0, 1)
+        .rotate(-pose.bodyAzimuth, 0, 1, 0)
+        .translate(
+            -pose.bodyPos.elements[0],
+            -pose.bodyPos.elements[1],
+            -pose.bodyPos.elements[2]
+        );
 
-    const localLookPos = invBodyMatrix.multiplyVector4(new Vector4([anim.lookTarget.elements[0], anim.lookTarget.elements[1], anim.lookTarget.elements[2], 1]));
+    const localLookPos = invBodyMatrix.multiplyVector4(
+        new Vector4([
+            anim.lookTarget.elements[0],
+            anim.lookTarget.elements[1],
+            anim.lookTarget.elements[2],
+            1,
+        ])
+    );
     const lookDir = getVec3();
     lookDir.set(localLookPos);
     lookDir.normalize();
 
     const t = 1 - Math.pow(0.0001, dt * Math.min(1, 0.1 + 10 * anim.lookTargetAge));
-    pose.headAngles.elements[0] = lerp(pose.headAngles.elements[0], Math.acos(lookDir.elements[1]) * 180 / Math.PI - 90, t);
-    pose.headAngles.elements[1] = lerp(pose.headAngles.elements[1], Math.atan2(lookDir.elements[0], lookDir.elements[2]) * 180 / Math.PI, t);
-    pose.headAngles.elements[2] = lerp(pose.headAngles.elements[2], -pose.bodyElevation * lookDir.elements[0] + anim.lookTilt, t);
+    pose.headAngles.elements[0] = lerp(
+        pose.headAngles.elements[0],
+        (Math.acos(lookDir.elements[1]) * 180) / Math.PI - 90,
+        t
+    );
+    pose.headAngles.elements[1] = lerp(
+        pose.headAngles.elements[1],
+        (Math.atan2(lookDir.elements[0], lookDir.elements[2]) * 180) / Math.PI,
+        t
+    );
+    pose.headAngles.elements[2] = lerp(
+        pose.headAngles.elements[2],
+        -pose.bodyElevation * lookDir.elements[0] + anim.lookTilt,
+        t
+    );
 
     // Update head offset
-    for (let i = 0; i < 3; i++)
-        pose.headOffset.elements[i] = lerp(pose.headOffset.elements[i], lookDir.elements[i], t);
+    for (let i = 0; i < 3; i++) {
+        pose.headOffset.elements[i] = lerp(
+            pose.headOffset.elements[i],
+            lookDir.elements[i],
+            t
+        );
+    }
 
     freeMat4(invBodyMatrix);
     freeVec3(lookDir);
@@ -334,19 +376,21 @@ function getMouseWorldPos() {
     camDir.elements[0] = azSin * elCos;
     camDir.elements[1] = -elSin;
     camDir.elements[2] = -azCos * elCos;
-    camPos.set(camDir)
-        .mul(-cameraDist)
-        .add(cameraCenter);
+    camPos.set(camDir).mul(-cameraDist).add(cameraCenter);
 
-    const mouseDir = temp.setRotate(-cameraAzimuth, 0,1,0)
-        .rotate(-cameraElevation, 1,0,0)
-        .multiplyVector3(new Vector3([
-            (2 * mouseX - canvas.width) / canvas.height,
-            (canvas.height - 2 * mouseY) / canvas.height,
-            -1/Math.tan(fov * Math.PI / 180 / 2)
-        ]));
+    const mouseDir = temp
+        .setRotate(-cameraAzimuth, 0, 1, 0)
+        .rotate(-cameraElevation, 1, 0, 0)
+        .multiplyVector3(
+            new Vector3([
+                (2 * mouseX - canvas.width) / canvas.height,
+                (canvas.height - 2 * mouseY) / canvas.height,
+                -1 / Math.tan(fov * Math.PI / 180 / 2),
+            ])
+        );
 
-    const res = new Vector3().set(mouseDir)
+    const res = new Vector3()
+        .set(mouseDir)
         .mul((floorY - camPos.elements[1]) / mouseDir.elements[1])
         .add(camPos);
 
@@ -380,9 +424,13 @@ function animateWalk(dt) {
         // Rotate body towards target pos
         const diffX = anim.moveTo.elements[0] - pose.bodyPos.elements[0];
         const diffZ = anim.moveTo.elements[2] - pose.bodyPos.elements[2];
-        const targetAngle = Math.atan2(diffX, diffZ) * 180 / Math.PI;
-        pose.bodyAzimuth = rotateTowards(pose.bodyAzimuth, targetAngle, dt * turnSpeed * speed / maxSpeed);
-        
+        const targetAngle = (Math.atan2(diffX, diffZ) * 180) / Math.PI;
+        pose.bodyAzimuth = rotateTowards(
+            pose.bodyAzimuth,
+            targetAngle,
+            (dt * turnSpeed * speed) / maxSpeed
+        );
+
         // Rotate velocity in direction of body
         anim.vel.elements[0] = speed * Math.sin(pose.bodyAzimuth * Math.PI / 180);
         anim.vel.elements[1] = 0;
@@ -399,34 +447,44 @@ function animateWalk(dt) {
     }
 
     // Step feet forward
-    anim.stepTimer += dt * 2 * (speed / maxSpeed * 0.9 + 0.1);
+    anim.stepTimer += dt * 2 * ((speed / maxSpeed) * 0.9 + 0.1);
     if (anim.stepTimer > 1) {
         anim.stepTimer -= 1;
         anim.stepCounter++;
         const foot = anim.stepCounter % 2;
 
         const y = floorY;
-        let x =  + (1 - 2 * foot) * 1.25;
+        let x = +(1 - 2 * foot) * 1.25;
         let z = 2;
         [x, z] = [
-            pose.bodyPos.elements[0] + x * Math.cos(pose.bodyAzimuth / 180 * Math.PI) + z * Math.sin(pose.bodyAzimuth / 180 * Math.PI) + anim.vel.elements[0] * 0.2,
-            pose.bodyPos.elements[2] + z * Math.cos(pose.bodyAzimuth / 180 * Math.PI) - x * Math.sin(pose.bodyAzimuth / 180 * Math.PI) + anim.vel.elements[2] * 0.2
+            pose.bodyPos.elements[0] +
+                x * Math.cos(pose.bodyAzimuth / 180 * Math.PI) +
+                z * Math.sin(pose.bodyAzimuth / 180 * Math.PI) +
+                anim.vel.elements[0] * 0.2,
+            pose.bodyPos.elements[2] +
+                z * Math.cos(pose.bodyAzimuth / 180 * Math.PI) -
+                x * Math.sin(pose.bodyAzimuth / 180 * Math.PI) +
+                anim.vel.elements[2] * 0.2,
         ];
 
         const stablePos = getStableFootPos(foot);
-        if (Math.sqrt(Math.pow(x - stablePos.elements[0], 2) + Math.pow(z - stablePos.elements[2], 2)) < 3.5) {
+        const distToStable = Math.sqrt(Math.pow(x - stablePos.elements[0], 2) + Math.pow(z - stablePos.elements[2], 2));
+        if (distToStable < 3.5) {
             x = stablePos.elements[0];
             z = stablePos.elements[2];
         }
 
-        if (!isFootStable(foot))
-            startStep(foot, x, y, z);
+        if (!isFootStable(foot)) startStep(foot, x, y, z);
     }
 
     // Animate body
     pose.bodyTilt = Math.sin((anim.stepCounter + anim.stepTimer) * Math.PI) * 15 * speed / maxSpeed;
-    pose.bodyPos.elements[1] = anim.baseBodyHeight + (Math.cos((anim.stepCounter + anim.stepTimer) * Math.PI * 2) * 0.25 + 0.25) * speed / maxSpeed;
-    pose.bodyElevation = anim.baseBodyElevation + Math.sin((anim.stepCounter + anim.stepTimer) * Math.PI * 2) * 2.5 * speed / maxSpeed;
+    pose.bodyPos.elements[1] =
+        anim.baseBodyHeight +
+        (Math.cos((anim.stepCounter + anim.stepTimer) * Math.PI * 2) * 0.25 + 0.25) * speed / maxSpeed;
+    pose.bodyElevation =
+        anim.baseBodyElevation +
+        Math.sin((anim.stepCounter + anim.stepTimer) * Math.PI * 2) * 2.5 * speed / maxSpeed;
 
     for (let i = 0; i < 3; i++)
         pose.bodyPos.elements[i] += anim.vel.elements[i] * dt;
@@ -436,10 +494,16 @@ function animateWalk(dt) {
     }
 
     // Stop walking when close enough to destination
-    const atTarget = Math.abs(pose.bodyPos.elements[0] - anim.moveTo.elements[0]) < 0.1
-        && Math.abs(pose.bodyPos.elements[2] - anim.moveTo.elements[2]) < 0.1;
+    const atTarget =
+        Math.abs(pose.bodyPos.elements[0] - anim.moveTo.elements[0]) < 0.1 &&
+        Math.abs(pose.bodyPos.elements[2] - anim.moveTo.elements[2]) < 0.1;
 
-    if (atTarget && feetStable && anim.footMove[0] === 1 && anim.footMove[1] === 1) {
+    if (
+        atTarget &&
+        feetStable &&
+        anim.footMove[0] === 1 &&
+        anim.footMove[1] === 1
+    ) {
         anim.moveTo = null;
         anim.newMoveDelay = 2 + 5 * Math.random();
     }
@@ -453,7 +517,8 @@ function animateIdle(dt) {
     if (anim.newMoveDelay == 0) {
         let x = Math.random() * 30 - 15;
         let z = Math.random() * 30 - 15;
-        while (Math.sqrt(Math.pow(x - pose.bodyPos.elements[0], 2) + Math.pow(z - pose.bodyPos.elements[2], 2)) < 10) {
+        const walkDist = Math.sqrt(Math.pow(x - pose.bodyPos.elements[0], 2) + Math.pow(z - pose.bodyPos.elements[2], 2));
+        while (walkDist < 10) {
             x = Math.random() * 30 - 15;
             z = Math.random() * 30 - 15;
         }
@@ -469,7 +534,10 @@ function animateIdle(dt) {
 
 function isFootStable(foot) {
     const stablePos = getStableFootPos(foot);
-    return Math.sqrt(Math.pow(anim.footTo[foot].elements[0] - stablePos.elements[0], 2) + Math.pow(anim.footTo[foot].elements[2] - stablePos.elements[2], 2)) < 2;
+    const stableDist = Math.sqrt(
+        Math.pow(anim.footTo[foot].elements[0] - stablePos.elements[0], 2) +
+        Math.pow(anim.footTo[foot].elements[2] - stablePos.elements[2], 2));
+    return  stableDist < 2;
 }
 
 function getStableFootPos(foot) {
@@ -479,7 +547,8 @@ function getStableFootPos(foot) {
     return new Vector3([
         anim.moveTo.elements[0] - dirZ * side * 0.8 - dirX,
         floorY,
-        anim.moveTo.elements[2] + dirX * side * 0.8 - dirZ]);
+        anim.moveTo.elements[2] + dirX * side * 0.8 - dirZ,
+    ]);
 }
 
 function startStep(foot, x, y, z) {
@@ -512,7 +581,7 @@ function animateFoot(foot, dt) {
     pose.footAngle[foot] = -pose.bodyElevation * (1 - lift);
     pose.talonCurl[foot] = lift;
 
-    freeVec3(pos)
+    freeVec3(pos);
 }
 
 /// CROW DRAWING CODE ///
@@ -531,20 +600,23 @@ function drawCrow(m) {
 
     // Wings
     const wingsClosed = 1 - pose.wingsOpen;
-    for (let wing = 0; wing < 2; wing++)
-    {
+    for (let wing = 0; wing < 2; wing++) {
         temp.set(m)
-            .scale(wing === 0 ? 1 : -1,1,1)
-            .translate(1 + Math.pow(wingsClosed, 0.5) * 0.5, 1.15, 1.25 - 0.5 * wingsClosed)
-            .rotate(wingsClosed * 7, 0,1,0)
-            .rotate(pose.wingsDown * -85, 0,0,1)
-            .rotate(65 - pose.wingsOpen * 70,0,1,0);
+            .scale(wing === 0 ? 1 : -1, 1, 1)
+            .translate(
+                1 + Math.pow(wingsClosed, 0.5) * 0.5,
+                1.15,
+                1.25 - 0.5 * wingsClosed
+            )
+            .rotate(wingsClosed * 7, 0, 1, 0)
+            .rotate(pose.wingsDown * -85, 0, 0, 1)
+            .rotate(65 - pose.wingsOpen * 70, 0, 1, 0);
         drawWing(temp, pose.wingsOpen, pose.wingsBend);
     }
-    
+
     // Tail feathers
     temp.set(m)
-        .translate(0,0.6,-2.75)
+        .translate(0, 0.6, -2.75)
         .rotate(-5 - 15 * pose.tailDown, 1, 0, 0);
     drawTail(temp, pose.tailSplay);
 
@@ -552,8 +624,7 @@ function drawCrow(m) {
     const look = getMat4();
 
     const endDelta = getVec3();
-    for (let leg = 0; leg < 2; leg++)
-    {
+    for (let leg = 0; leg < 2; leg++) {
         temp.setInverseOf(m);
         const footPos = temp.multiplyVector4(pose.footPos[leg]);
 
@@ -576,17 +647,15 @@ function drawCrow(m) {
         // Foot
         temp.set(m)
             .translate(e[0] + ox, e[1] + oy, e[2] + oz)
-            .rotate(-pose.bodyTilt, 0,0,1)
-            .rotate(pose.footAngle[leg], 1,0,0)
-            .rotate(Math.atan2(e[2] - 5, e[0]) * 180 / Math.PI + 90, 0,1,0)
+            .rotate(-pose.bodyTilt, 0, 0, 1)
+            .rotate(pose.footAngle[leg], 1, 0, 0)
+            .rotate(Math.atan2(e[2] - 5, e[0]) * 180 / Math.PI + 90, 0, 1, 0)
             .scale(side, 1, 1);
         drawFoot(temp, pose.talonCurl[leg]);
 
         // Leg
-        look.setLookAt(0,0,0, e[0],e[1],e[2], 0,0,1).transpose();
-        temp.set(m)
-            .translate(ox,oy,oz)
-            .multiply(look);
+        look.setLookAt(0, 0, 0, e[0], e[1], e[2], 0, 0, 1).transpose();
+        temp.set(m).translate(ox, oy, oz).multiply(look);
         drawLeg(temp, endDelta.magnitude());
     }
 
@@ -597,18 +666,26 @@ function drawCrow(m) {
     // Neck
     setDrawColor(colors.feathers);
     temp.set(m)
-        .translate(neckDelta.elements[0] / 2, neckDelta.elements[1] / 2 + 0.25, neckDelta.elements[2] / 2 + 1.5)
-        .scale(0.8,0.8,0.7)
-        .rotate(pose.headAngles.elements[2] / 2, 0,0,1);
+        .translate(
+            neckDelta.elements[0] / 2,
+            neckDelta.elements[1] / 2 + 0.25,
+            neckDelta.elements[2] / 2 + 1.5
+        )
+        .scale(0.8, 0.8, 0.7)
+        .rotate(pose.headAngles.elements[2] / 2, 0, 0, 1);
     drawFancyCube(temp);
 
     // Head
     temp.set(m)
-        .translate(pose.headOffset.elements[0], pose.headOffset.elements[1], pose.headOffset.elements[2])
-        .translate(0,0,3.5)
-        .rotate(pose.headAngles.elements[1], 0,1,0)
-        .rotate(pose.headAngles.elements[0], 1,0,0)
-        .rotate(pose.headAngles.elements[2], 0,0,1)
+        .translate(
+            pose.headOffset.elements[0],
+            pose.headOffset.elements[1],
+            pose.headOffset.elements[2]
+        )
+        .translate(0, 0, 3.5)
+        .rotate(pose.headAngles.elements[1], 0, 1, 0)
+        .rotate(pose.headAngles.elements[0], 1, 0, 0)
+        .rotate(pose.headAngles.elements[2], 0, 0, 1);
     drawHead(temp, pose.beakOpen, pose.blink);
 
     freeVec3(endDelta);
@@ -620,69 +697,64 @@ function drawHead(m, open, blink) {
     const temp = getMat4();
 
     const upperBeak = getMat4();
-    upperBeak.set(m)
-        .translate(0,0.15,1)
-        .rotate(-30 * open, 1,0,0);
+    upperBeak
+        .set(m)
+        .translate(0, 0.15, 1)
+        .rotate(-30 * open, 1, 0, 0);
 
     const lowerBeak = getMat4();
-    lowerBeak.set(m)
-        .translate(0,-0.15,1)
-        .rotate(30 * open, 1,0,0);
+    lowerBeak
+        .set(m)
+        .translate(0, -0.15, 1)
+        .rotate(30 * open, 1, 0, 0);
 
     // Main head
     setDrawColor(colors.feathers);
-    temp.set(m)
-        .scale(1,1,1.1);
+    temp.set(m).scale(1, 1, 1.1);
     drawFancyCube(temp);
 
     // Upper beak
     setDrawColor(colors.beak);
     temp.set(upperBeak)
-        .translate(0,0.3 - 0.15,0.9 - 1)
-        .rotate(15, 1,0,0)
-        .scale(0.4,0.3,0.8)
-        .translate(0,0,1);
+        .translate(0, 0.3 - 0.15, 0.9 - 1)
+        .rotate(15, 1, 0, 0)
+        .scale(0.4, 0.3, 0.8)
+        .translate(0, 0, 1);
     drawFancyCube(temp);
 
     temp.set(upperBeak)
-        .translate(0,-0.3,1.53)
-        .rotate(45, 1,0,0)
-        .scale(0.35,0.23,0.23);
+        .translate(0, -0.3, 1.53)
+        .rotate(45, 1, 0, 0)
+        .scale(0.35, 0.23, 0.23);
     drawFancyCube(temp);
 
     // Lower beak
     temp.set(lowerBeak)
-        .translate(0,-0.15,-0.1)
-        .rotate(-5, 1,0,0)
-        .scale(0.35,0.2,0.8)
-        .translate(0,0,1);
+        .translate(0, -0.15, -0.1)
+        .rotate(-5, 1, 0, 0)
+        .scale(0.35, 0.2, 0.8)
+        .translate(0, 0, 1);
     drawFancyCube(temp);
 
     // Eyes
     for (let side = -1; side <= 1; side += 2) {
         setDrawColor(colors.eyes);
-        temp.set(m)
-            .translate(side, 0.1, 0.3)
-            .scale(0.1, 0.4, 0.4);
+        temp.set(m).translate(side, 0.1, 0.3).scale(0.1, 0.4, 0.4);
         drawFancyCube(temp);
-        
+
         setDrawColor(colors.pupils);
-        temp.set(m)
-            .translate(side, 0.1, 0.35)
-            .scale(0.11, 0.25, 0.25);
+        temp.set(m).translate(side, 0.1, 0.35).scale(0.11, 0.25, 0.25);
         drawFancyCube(temp);
-        
+
         setDrawColor(colors.eyeShines);
-        temp.set(m)
-            .translate(side, 0.3, 0.1)
-            .scale(0.12, 0.1, 0.1);
+        temp.set(m).translate(side, 0.3, 0.1).scale(0.12, 0.1, 0.1);
         drawFancyCube(temp);
 
         // Eyebrows
         setDrawColor(colors.feathers);
         temp.set(m)
             .translate(side * 0.97, 0.6, 0.3)
-            .rotate(20 * side, 0,0,1)
+            .rotate(20 * side, 0, 0, 1)
             .scale(0.1, 0.2, 0.5);
         drawFancyCube(temp);
 
@@ -704,14 +776,17 @@ function drawLeg(m, length) {
     const b = lowerLegLength;
     const c = Math.max(Math.abs(a - b), Math.min(length, a + b));
     let kneeAngle = Math.acos((a * a + b * b - c * c) / (2 * a * b));
-    let hipAngle = Math.asin(b / c * Math.sin(kneeAngle));
+    let hipAngle = Math.asin((b / c) * Math.sin(kneeAngle));
     kneeAngle *= 180 / Math.PI;
     hipAngle *= 180 / Math.PI;
 
-    const upper = getMat4().set(m).rotate(-hipAngle, 1,0,0);
-    const lower = getMat4().set(upper).translate(0,0,-a).rotate(180 - kneeAngle, 1,0,0);
+    const upper = getMat4().set(m).rotate(-hipAngle, 1, 0, 0);
+    const lower = getMat4()
+        .set(upper)
+        .translate(0, 0, -a)
+        .rotate(180 - kneeAngle, 1, 0, 0);
     const temp = getMat4();
-    
+
     // Upper leg
     setDrawColor(colors.feathers);
     temp.set(upper)
@@ -725,9 +800,7 @@ function drawLeg(m, length) {
     drawFancyCube(temp);
 
     // Lower leg
-    temp.set(lower)
-        .translate(0, 0, -0.3)
-        .scale(0.3, 0.3, 0.6);
+    temp.set(lower).translate(0, 0, -0.3).scale(0.3, 0.3, 0.6);
     drawFancyCube(temp);
 
     setDrawColor(colors.legs);
@@ -746,13 +819,13 @@ function drawFoot(m, curl) {
 
     temp.set(m);
     drawTalon(temp, curl);
-    temp.set(m).rotate(-30, 0,1,0).scale(0.85,0.85,0.85);
+    temp.set(m).rotate(-30, 0, 1, 0).scale(0.85, 0.85, 0.85);
     drawTalon(temp, curl);
-    temp.set(m).rotate(30, 0,1,0).scale(0.85,0.85,0.85);
+    temp.set(m).rotate(30, 0, 1, 0).scale(0.85, 0.85, 0.85);
     drawTalon(temp, curl);
-    temp.set(m).rotate(180, 0,1,0).scale(0.6,0.6,0.6);
+    temp.set(m).rotate(180, 0, 1, 0).scale(0.6, 0.6, 0.6);
     drawTalon(temp, curl);
-    
+
     freeMat4(temp);
 }
 
@@ -761,30 +834,22 @@ function drawTalon(m, curl) {
     const bone = getMat4();
 
     bone.set(m)
-        .translate(0,0.4,0)
-        .rotate(curl * 20 + 5, 1,0,0);
+        .translate(0, 0.4, 0)
+        .rotate(curl * 20 + 5, 1, 0, 0);
 
     setDrawColor(colors.legs);
-    temp.set(bone)
-        .scale(0.2,0.2,0.5)
-        .translate(0,-1,1);
+    temp.set(bone).scale(0.2, 0.2, 0.5).translate(0, -1, 1);
     drawFancyCube(temp);
 
-    bone.translate(0,0,1)
-        .rotate(curl * 20, 1,0,0);
+    bone.translate(0, 0, 1).rotate(curl * 20, 1, 0, 0);
 
-    temp.set(bone)
-        .scale(0.15,0.15,0.2)
-        .translate(0,-1,1);
+    temp.set(bone).scale(0.15, 0.15, 0.2).translate(0, -1, 1);
     drawFancyCube(temp);
 
-    bone.translate(0,0,0.4)
-        .rotate(curl * 20 + 10, 1,0,0);
+    bone.translate(0, 0, 0.4).rotate(curl * 20 + 10, 1, 0, 0);
 
     setDrawColor(colors.talons);
-    temp.set(bone)
-        .scale(0.1,0.1,0.2)
-        .translate(0,-1,1);
+    temp.set(bone).scale(0.1, 0.1, 0.2).translate(0, -1, 1);
     drawFancyCube(temp);
 
     freeMat4(temp);
@@ -796,7 +861,7 @@ function drawTail(m, splay) {
     setDrawColor(colors.feathers);
 
     for (let i = 0; i < 8; i++) {
-        const t = i / 7 * 2 - 1;
+        const t = (i / 7) * 2 - 1;
         temp.set(m)
             .translate(t * 0.5, 0, 0)
             .rotate(180 - t * (splay * 40 - 5), 0, 1, 0)
@@ -811,31 +876,38 @@ function drawWing(m, open, bend) {
     const squash = 1 - closed * 0.7;
     const part = getMat4();
     setDrawColor(colors.feathers);
-    
+
     // Shoulder
-    part.set(m).translate(1,0,0).scale(1.5,0.45,0.7);
+    part.set(m).translate(1, 0, 0).scale(1.5, 0.45, 0.7);
     drawFancyCube(part);
 
     // Elbow
     const elbowAngle = closed * 30 + bend * 70 * open;
     const elbow = getMat4();
-    elbow.set(m).translate(2.5,0,0.6).rotate(elbowAngle,0,1,0);
-    part.set(elbow).translate(1,0,-0.4).scale(1,0.4,0.4);
+    elbow.set(m).translate(2.5, 0, 0.6).rotate(elbowAngle, 0, 1, 0);
+    part.set(elbow).translate(1, 0, -0.4).scale(1, 0.4, 0.4);
     drawFancyCube(part);
 
     // Feathers
     for (let i = 0; i < 6; i++) {
         const t = i / 5;
+
+        const angle = 130
+            + open * 60
+            - open * t * 35
+            - closed * t * 10
+            - closed * (1 - t) * 15;
+
         part.set(m)
-            .translate(t * 1.75 + 0.4,0,0)
-            .rotate(130 + 60 * open - open * t * 35 - closed * t * 10 - 15 * (1 - t) * closed,0,1,0);
-            drawFlightFeather(part, 6 + 0.75 * t);
+            .translate(t * 1.75 + 0.4, 0, 0)
+            .rotate(angle, 0, 1, 0);
+        drawFlightFeather(part, 6 + 0.75 * t);
     }
     for (let i = 0; i < 6; i++) {
         const t = i / 5;
         part.set(elbow)
-            .translate(t * 1.5 + 0.4,0,-0.5)
-            .rotate(90 + 60 * open - open * t * 60,0,1,0);
+            .translate(t * 1.5 + 0.4, 0, -0.5)
+            .rotate(90 + open * 60 - open * t * 60, 0, 1, 0);
         drawFlightFeather(part, 6.45 - 1.5 * t * t);
     }
 
@@ -848,10 +920,10 @@ function drawFlightFeather(m, length) {
 
     temp.set(m)
         .translate(0, 0, length / 2)
-        .rotate(-20,0,0,1)
+        .rotate(-20, 0, 0, 1)
         .scale(0.4, 0.15, length / 2);
     drawFancyCube(temp);
-    temp.translate(0,1,-0.5).scale(1.25,1,0.5);
+    temp.translate(0, 1, -0.5).scale(1.25, 1, 0.5);
     drawFancyCube(temp);
 
     freeMat4(temp);
@@ -876,7 +948,7 @@ function drawBody(m) {
     drawFancyCube(part);
     part.set(m).scale(1.2, 1.2, 2.2);
     drawFancyCube(part);
-    part.set(m).translate(0,0.25,-2.5).scale(0.75, 0.6, 0.5);
+    part.set(m).translate(0, 0.25, -2.5).scale(0.75, 0.6, 0.5);
     drawFancyCube(part);
 
     freeMat4(part);
@@ -889,7 +961,7 @@ function rotateTowards(from, to, delta) {
 }
 
 function angleDiff(a, b) {
-    return ((a - b + 180) % 360 + 360) % 360 - 180;
+    return ((((a - b + 180) % 360) + 360) % 360) - 180;
 }
 
 function lerp(a, b, t) {
@@ -911,8 +983,7 @@ function getVec3() {
 }
 
 function freeVec3(v) {
-    for (let i = 0; i < 3; i++)
-        v.elements[i] = 0;
+    for (let i = 0; i < 3; i++) v.elements[i] = 0;
     tempVec3s.push(v);
 }
 
@@ -923,8 +994,12 @@ function setDrawColor(r, g, b, a) {
         g = r[1];
         r = r[0];
     }
-    if (r != currentColor[0] || g != currentColor[1] || b != currentColor[2] || a != currentColor[3])
-    {
+    if (
+        r != currentColor[0] ||
+        g != currentColor[1] ||
+        b != currentColor[2] ||
+        a != currentColor[3]
+    ) {
         gl.uniform4f(u_Color, r, g, b, a != null ? a : 1);
         currentColor[0] = r;
         currentColor[1] = g;
@@ -939,11 +1014,13 @@ function drawCube(m) {
 }
 
 function drawFancyCube(m) {
-
     // Compute shadow matrix
     const temp = getMat4();
     const dir = lightDir.elements;
-    temp.dropShadow([0,1,0,-floorY-cameraDist*0.001], [-dir[0], -dir[1], -dir[2], 0]);
+    temp.dropShadow(
+        [0, 1, 0, -floorY - cameraDist * 0.001],
+        [-dir[0], -dir[1], -dir[2], 0]
+    );
     temp.multiply(m);
 
     // Draw shadow
@@ -972,21 +1049,28 @@ function renderScene() {
     if (anim.keepCentered) {
         cameraCenter.set(pose.bodyPos);
     } else {
-        for (let i = 0; i < 3; i++)
-            cameraCenter.elements[i] = 0;
+        for (let i = 0; i < 3; i++) cameraCenter.elements[i] = 0;
     }
 
     // Clip camera out of floor
     const minFloorDist = 0.25;
-    if (floorY + minFloorDist - cameraCenter.elements[1] > -cameraDist)
-        cameraElevation = Math.max(cameraElevation, Math.asin((floorY + minFloorDist - cameraCenter.elements[1]) / cameraDist) * 180 / Math.PI);
+    if (floorY + minFloorDist - cameraCenter.elements[1] > -cameraDist) {
+        cameraElevation = Math.max(
+            cameraElevation,
+            Math.asin((floorY + minFloorDist - cameraCenter.elements[1]) / cameraDist) * 180 / Math.PI
+        );
+    }
 
     // View
     const worldToView = getMat4()
         .setTranslate(0, 0, -cameraDist)
         .rotate(cameraElevation, 1, 0, 0)
         .rotate(cameraAzimuth, 0, 1, 0)
-        .translate(-cameraCenter.elements[0], -cameraCenter.elements[1], -cameraCenter.elements[2]);
+        .translate(
+            -cameraCenter.elements[0],
+            -cameraCenter.elements[1],
+            -cameraCenter.elements[2]
+        );
 
     // Projection
     const worldToScreen = getMat4();
@@ -1001,7 +1085,7 @@ function renderScene() {
     setDrawColor(colors.ground);
     temp.setTranslate(0, floorY, 0);
     temp.scale(100, 1, 100);
-    
+
     gl.bindBuffer(gl.ARRAY_BUFFER, circleModel);
     gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, 4 * 6, 0);
     gl.vertexAttribPointer(a_Normal, 3, gl.FLOAT, true, 4 * 6, 4 * 3);
@@ -1009,10 +1093,14 @@ function renderScene() {
     gl.drawArrays(gl.TRIANGLES, 0, 14 * 3);
 
     // Model
-    temp.setTranslate(pose.bodyPos.elements[0], pose.bodyPos.elements[1], pose.bodyPos.elements[2])
-        .rotate(pose.bodyAzimuth, 0,1,0)
-        .rotate(pose.bodyTilt, 0,0,1)
-        .rotate(pose.bodyElevation, 1,0,0);
+    temp.setTranslate(
+        pose.bodyPos.elements[0],
+        pose.bodyPos.elements[1],
+        pose.bodyPos.elements[2]
+    )
+        .rotate(pose.bodyAzimuth, 0, 1, 0)
+        .rotate(pose.bodyTilt, 0, 0, 1)
+        .rotate(pose.bodyElevation, 1, 0, 0);
     drawCrow(temp);
     freeMat4(temp);
 }
@@ -1036,10 +1124,8 @@ function createCubeData() {
         data[dataInd++] = normal.elements[2];
     }
 
-    for (let axis = 0; axis < 3; axis++)
-    {
-        for (let dir = -1; dir <= 1; dir += 2)
-        {
+    for (let axis = 0; axis < 3; axis++) {
+        for (let dir = -1; dir <= 1; dir += 2) {
             // Compute face normals and tangent
             normal.sub(normal);
             normal.elements[axis] = dir;
@@ -1155,7 +1241,7 @@ function main() {
     setupGL();
 
     // Rotate camera on mouse input
-    canvas.addEventListener("mousemove", function(event) {
+    canvas.addEventListener("mousemove", function (event) {
         mouseX = event.x;
         mouseY = event.y;
         if ((event.buttons & 1) != 0) {
@@ -1165,17 +1251,19 @@ function main() {
     });
 
     // Zoom camera on scroll
-    canvas.addEventListener("wheel", function(event) {
-        cameraDist = Math.max(1, cameraDist * (1 + Math.sign(event.deltaY) * 0.2));
+    canvas.addEventListener("wheel", function (event) {
+        cameraDist = Math.max(
+            1,
+            cameraDist * (1 + Math.sign(event.deltaY) * 0.2)
+        );
         cameraDist = Math.min(cameraDist, 600);
     });
 
     // Startle the bird on poke
-    canvas.addEventListener("mousedown", function(event) {
+    canvas.addEventListener("mousedown", function (event) {
         mouseX = event.x;
         mouseY = event.y;
-        if (event.shiftKey)
-            startStartle();
+        if (event.shiftKey) startStartle();
     });
 
     // Resize canvas to fit the screen
@@ -1183,7 +1271,7 @@ function main() {
     resize();
 
     // Track FPS
-    setInterval(function() {
+    setInterval(function () {
         fpsCounter.innerText = frames;
         frames = 0;
     }, 1000);
