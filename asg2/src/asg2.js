@@ -127,6 +127,8 @@ const anim = {
     startled: false,
     startleTimer: 0,
     startleDir: new Vector3([0, 0, 1]),
+
+    queuedMoveTo: null
 };
 
 /// CROW ANIMATION CODE ///
@@ -173,6 +175,7 @@ function startStartle() {
     const mousePos = getMouseWorldPos();
 
     anim.moveTo = null;
+    anim.newMoveDelay = Math.random() + 1;
     anim.startled = true;
     anim.startleDir.set(mousePos).sub(pose.bodyPos);
     anim.startleDir.elements[1] = 0;
@@ -190,6 +193,17 @@ function startStartle() {
     anim.footMove[0] = 1;
     anim.footMove[1] = 1;
     pose.blink = 1;
+}
+
+function startForceMove() {
+    const mousePos = getMouseWorldPos();
+    mousePos.sub(pose.bodyPos);
+    mousePos.elements[1] = 0;
+    if (mousePos.magnitude() < 8) {
+        mousePos.normalize().mul(8);
+    }
+    mousePos.add(pose.bodyPos);
+    anim.queuedMoveTo = mousePos;
 }
 
 function animateStartle(dt) {
@@ -418,6 +432,12 @@ function animateWalk(dt) {
     let speed = anim.vel.magnitude();
 
     if (!anyFootStable) {
+        // Change target when right click pressed
+        if (anim.queuedMoveTo) {
+            anim.moveTo.set(anim.queuedMoveTo);
+            anim.queuedMoveTo = null;
+        }
+
         // Increase speed up to cap
         speed = Math.min(speed + accel * dt, maxSpeed);
 
@@ -514,15 +534,31 @@ function animateWalk(dt) {
 function animateIdle(dt) {
     anim.newMoveDelay = Math.max(anim.newMoveDelay - dt, 0);
 
-    if (anim.newMoveDelay == 0) {
+    if (anim.newMoveDelay == 0 || anim.queuedMoveTo) {
         let x, z, walkDist;
-        do {
-            x = Math.random() * 30 - 15;
-            z = Math.random() * 30 - 15;
-            walkDist = Math.sqrt(Math.pow(x - pose.bodyPos.elements[0], 2) + Math.pow(z - pose.bodyPos.elements[2], 2));
-        } while (walkDist < 10);
+
+        if (anim.queuedMoveTo) {
+            x = anim.queuedMoveTo.elements[0];
+            z = anim.queuedMoveTo.elements[2];
+            anim.queuedMoveTo = null;
+        } else {
+            do {
+                x = Math.random() * 30 - 15;
+                z = Math.random() * 30 - 15;
+                walkDist = Math.sqrt(Math.pow(x - pose.bodyPos.elements[0], 2) + Math.pow(z - pose.bodyPos.elements[2], 2));
+            } while (walkDist < 10);
+        }
 
         anim.moveTo = new Vector3([x, 0, z]);
+        anim.stepTimer = 1;
+        
+        // Figure out which foot should move first
+        const diffX = anim.moveTo.elements[0] - pose.bodyPos.elements[0];
+        const diffZ = anim.moveTo.elements[2] - pose.bodyPos.elements[2];
+        const targetAngle = (Math.atan2(diffX, diffZ) * 180) / Math.PI;
+        const delta = angleDiff(targetAngle, pose.bodyAzimuth);
+
+        anim.stepCounter = delta > 0 ? 1 : 0;
     }
 
     pose.bodyPos.elements[1] = anim.baseBodyHeight;
@@ -1262,7 +1298,18 @@ function main() {
     canvas.addEventListener("mousedown", function (event) {
         mouseX = event.x;
         mouseY = event.y;
-        if (event.shiftKey) startStartle();
+        if (event.button == 0 && event.shiftKey) {
+            startStartle();
+        } else if (event.button == 2) {
+            event.preventDefault();
+            startForceMove();
+        }
+    });
+
+    // Disable context menu so right click works
+    canvas.addEventListener("contextmenu", function (event) {
+        event.preventDefault();
+        return false;
     });
 
     // Resize canvas to fit the screen
