@@ -802,7 +802,7 @@ function main() {
     // Rotate camera on mouse input
     canvas.addEventListener("mousemove", function (event) {
         if (document.pointerLockElement === canvas) {
-            const scale = 180 / canvas.height;
+            const scale = 180 / 1080;
             turnCamera(-event.movementX * scale, -event.movementY * scale);
         }
     });
