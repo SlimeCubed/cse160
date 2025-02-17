@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>Assignment 3: Virtual World</title>
+        <style>
+            body {
+                margin: 0;
+                overflow: hidden;
+            }
+            .popup {
+                font-family: Arial, Helvetica, sans-serif;
+                position: absolute;
+                right: 0px;
+                bottom: 0px;
+                background-color: #101012;
+                color: #999;
+                border-top-left-radius: 15px;
+                padding: 10px;
+                padding-left: 30px;
+                padding-bottom: 30px;
+                transition: bottom 0.4s ease-in-out 0s;
+                box-shadow: -10px 5px 0px rgba(0,0,0,0.25);
+            }
+            table {
+                background-color: #222;
+                padding: 10px;
+                border-radius: 5px;
+            }
+            td {
+                vertical-align: top;
+            }
+            button {
+                margin: 2px;
+                margin-right: 5px;
+                width: 100px;
+                padding: 5px;
+                background-color: #005784;
+                color: white;
+                font-weight: bold;
+                border-width: 0;
+                border-radius: 3px;
+            }
+            .creative-toggle {
+                margin-bottom: 10px;
+            }
+        </style>
+    </head>
+
+    <body onload="main()">
+        <canvas id="webgl" width="400" height="400">
+            Please use the browser supporting "canvas".
+        </canvas>
+        <div id="popup" class="popup">
+            <h2>Controls</h2>
+            <table>
+                <tr>
+                    <td>
+                        <h3>Arena Mode</h3>
+                        <ul>
+                            <li><strong>WASD</strong>: Move</li>
+                            <li><strong>Space</strong>: Jump</li>
+                            <li><strong>Shift</strong>: Crouch</li>
+                            <li><strong>Escape</strong>: Show Menu</li>
+                            <li><strong>Right Click</strong>: Draw Bow</li>
+                            <li><strong>Hold Right Click</strong>: Charge Explosive Shot</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <h3>Creative Mode</h3>
+                        <ul>
+                            <li><strong>WASD</strong>: Move</li>
+                            <li><strong>Space</strong>: Fly Up</li>
+                            <li><strong>Double Tap Space</strong>: Start/Stop Flying</li>
+                            <li><strong>Shift</strong>: Fly Down</li>
+                            <li><strong>Escape</strong>: Show Menu</li>
+                            <li><strong>Left Click</strong>: Break Block</li>
+                            <li><strong>Right Click</strong>: Place Block</li>
+                            <li><strong>1-9</strong>: Switch Block</li>
+                            <li><strong>B</strong>: Toggle Sphere Brush</li>
+                            <li><strong>V</strong>: Toggle Fast Placement</li>
+                        </ul>
+                    </td>
+                </tr>
+            </table>
+            <p>Click on the world to get started!</p>
+            <h2>Tools</h2>
+            <div class="creative-toggle">
+                <label for="creative">Creative Mode</label><input id="creative" type="checkbox">
+            </div>
+            <button onclick="clearLevel()">CLEAR</button>
+            <button onclick="if (loadInput) loadInput.click()">LOAD</button><input id="loadInput" type="file" accept=".voxel" hidden/>
+            <button onclick="saveToFile()">SAVE</button><input id="saveInput" type="text" value="my_world"/>
+        </div>
+        <script src="../lib/cuon-matrix-cse160.js"></script>
+        <script src="../lib/cuon-utils.js"></script>
+        <script src="utils.js"></script>
+        <script src="Audio.js"></script>
+        <script src="Camera.js"></script>
+        <script src="VoxelChunk.js"></script>
+        <script src="Skybox.js"></script>
+        <script src="Water.js"></script>
+        <script src="Sprite.js"></script>
+        <script src="Player.js"></script>
+        <script src="WorldGen.js"></script>
+        <script src="Pathfinder.js"></script>
+        <script src="Enemies.js"></script>
+        <script src="Bow.js"></script>
+        <script src="asg3.js"></script>
+    </body>
+</html>
