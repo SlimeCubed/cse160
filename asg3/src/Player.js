@@ -76,7 +76,7 @@ class Player {
                 this.velocity.elements[1] = 3;
         }
 
-        if (this.inWater && director.difficulty.level > 0) {
+        if (this.inWater && director !== null && director.difficulty.level > 0) {
             this.drown += dt;
             if (this.drown > this.drownGracePeriod)
                 this.hit(this.drownDamage);
@@ -180,7 +180,9 @@ class Player {
         for (const enemy of enemies) {
             enemy.exploded();
         }
-        director.reset();
+
+        if (director)
+            director.reset();
     }
 
     hit(damage, ignoreInvuln) {

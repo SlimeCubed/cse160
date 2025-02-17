@@ -14,13 +14,31 @@
                 right: 0px;
                 bottom: 0px;
                 background-color: #101012;
-                color: #999;
+                color: #BBB;
                 border-top-left-radius: 15px;
                 padding: 10px;
                 padding-left: 30px;
                 padding-bottom: 30px;
                 transition: bottom 0.4s ease-in-out 0s;
                 box-shadow: -10px 5px 0px rgba(0,0,0,0.25);
+            }
+            .special-text {
+                color: #31a2f2;
+            }
+            .score {
+                font-family: Georgia, 'Times New Roman', Times, serif;
+                position: absolute;
+                left: 5px;
+                top: 5px;
+                width: 200px;
+                padding: 10px;
+                padding-left: 20px;
+                background-color: #10101288;
+                border-radius: 8px;
+                color: #DDD;
+            }
+            .score-label {
+                color: #BBB;
             }
             table {
                 background-color: #222;
@@ -51,6 +69,10 @@
         <canvas id="webgl" width="400" height="400">
             Please use the browser supporting "canvas".
         </canvas>
+        <div id="scoreContainer" class="score">
+            <h2><strong class="score-label">Score:</strong> <span id="score">0</span></h2>
+            <h2><strong class="score-label">Multiplier:</strong> <span id="multiplier">0</span></h2>
+        </div>
         <div id="popup" class="popup">
             <h2>Controls</h2>
             <table>
@@ -65,14 +87,14 @@
                             <li><strong>Right Click</strong>: Draw Bow</li>
                             <li><strong>Hold Right Click</strong>: Charge Explosive Shot</li>
                         </ul>
+                        <p><strong class="special-text">Shoot the crystal</strong> to start arena mode.</p>
                     </td>
                     <td>
                         <h3>Creative Mode</h3>
                         <ul>
                             <li><strong>WASD</strong>: Move</li>
-                            <li><strong>Space</strong>: Fly Up</li>
+                            <li><strong>Space/Shift</strong>: Fly Up/Down</li>
                             <li><strong>Double Tap Space</strong>: Start/Stop Flying</li>
-                            <li><strong>Shift</strong>: Fly Down</li>
                             <li><strong>Escape</strong>: Show Menu</li>
                             <li><strong>Left Click</strong>: Break Block</li>
                             <li><strong>Right Click</strong>: Place Block</li>
@@ -83,10 +105,9 @@
                     </td>
                 </tr>
             </table>
-            <p>Click on the world to get started!</p>
             <h2>Tools</h2>
             <div class="creative-toggle">
-                <label for="creative">Creative Mode</label><input id="creative" type="checkbox">
+                <label for="creative"><strong>Creative Mode</strong></label><input id="creative" type="checkbox">
             </div>
             <button onclick="clearLevel()">CLEAR</button>
             <button onclick="if (loadInput) loadInput.click()">LOAD</button><input id="loadInput" type="file" accept=".voxel" hidden/>

@@ -140,8 +140,9 @@ class VoxelChunk
         this.position = new Vector3();
     }
 
+    static _data = [];
     _rebuildMesh() {
-        const data = [];
+        const data = VoxelChunk._data;
         const normal = new Vector3();
         const tangent = new Vector3();
         const bitangent = new Vector3();
@@ -193,6 +194,9 @@ class VoxelChunk
                     // Loop through all faces
                     for (let axis = 0; axis < 3; axis++) {
                         for (let dir = -1; dir <= 1; dir += 2) {
+                            // Don't add bottom faces
+                            if (y === -5 && axis === 1 && dir === -1)
+                                continue;
 
                             // Compute face normals and tangent
                             normal.sub(normal);
@@ -220,15 +224,19 @@ class VoxelChunk
                             bitangent.set(normal).cross(tangent);
                             
                             // Tangent is down, bitangent is left
-                            const td = this.getBlock(point.set(corner).add(normal).sub(tangent));
-                            const rd = this.getBlock(point.set(corner).add(normal).sub(bitangent));
-                            const bd = this.getBlock(point.set(corner).add(normal).add(tangent));
-                            const ld = this.getBlock(point.set(corner).add(normal).add(bitangent));
+                            const c = corner.elements;
+                            const n = normal.elements;
+                            const t = tangent.elements;
+                            const b = bitangent.elements;
+                            const td = this.getBlock(c[0] + n[0] - t[0], c[1] + n[1] - t[1], c[2] + n[2] - t[2]);
+                            const rd = this.getBlock(c[0] + n[0] - b[0], c[1] + n[1] - b[1], c[2] + n[2] - b[2]);
+                            const bd = this.getBlock(c[0] + n[0] + t[0], c[1] + n[1] + t[1], c[2] + n[2] + t[2]);
+                            const ld = this.getBlock(c[0] + n[0] + b[0], c[1] + n[1] + b[1], c[2] + n[2] + b[2]);
                             
-                            const trd = this.getBlock(point.set(corner).add(normal).sub(tangent).sub(bitangent));
-                            const brd = this.getBlock(point.set(corner).add(normal).sub(bitangent).add(tangent));
-                            const bld = this.getBlock(point.set(corner).add(normal).add(tangent).add(bitangent));
-                            const tld = this.getBlock(point.set(corner).add(normal).add(bitangent).sub(tangent));
+                            const trd = this.getBlock(c[0] + n[0] - t[0] - b[0], c[1] + n[1] - t[1] - b[1], c[2] + n[2] - t[2] - b[2]);
+                            const brd = this.getBlock(c[0] + n[0] - b[0] + t[0], c[1] + n[1] - b[1] + t[1], c[2] + n[2] - b[2] + t[2]);
+                            const bld = this.getBlock(c[0] + n[0] + t[0] + b[0], c[1] + n[1] + t[1] + b[1], c[2] + n[2] + t[2] + b[2]);
+                            const tld = this.getBlock(c[0] + n[0] + b[0] - t[0], c[1] + n[1] + b[1] - t[1], c[2] + n[2] + b[2] - t[2]);
 
                             add(point.set(normal).add(bitangent).add(tangent).mul(0.5).add(center), (uvs[2] - m) / atlasWidth, (uvs[3] - m) / atlasHeight, ld || bd || bld);
                             add(point.set(normal).sub(bitangent).sub(tangent).mul(0.5).add(center), (uvs[0] + m) / atlasWidth, (uvs[1] + m) / atlasHeight, rd || td || trd);
@@ -242,11 +250,11 @@ class VoxelChunk
                 }
             }
         }
-        this._vertexCount = data.length / 11;
+        this._vertexCount = dataInd / 11;
 
         // Upload into buffer
         gl.bindBuffer(gl.ARRAY_BUFFER, this._buffer);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.STATIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.slice(0, dataInd)), gl.STATIC_DRAW);
     }
 
     setModelMatrix(mat) {

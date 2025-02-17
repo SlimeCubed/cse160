@@ -7,6 +7,9 @@
 /** @type {HTMLInputElement} */ let loadInput = null;
 /** @type {HTMLInputElement} */ let saveInput = null;
 /** @type {HTMLInputElement} */ let creativeCheckbox = null;
+/** @type {HTMLDivElement} */ let scoreContainer = null;
+/** @type {HTMLSpanElement} */ let scoreDisplay = null;
+/** @type {HTMLSpanElement} */ let multiplierDisplay = null;
 /** @type {WebGLRenderingContext} */ let gl = null;
 /** @type {Camera} */ let camera = new Camera();
 /** @type {Player} */ let player = null;
@@ -39,6 +42,7 @@
 /** @type {Array<Enemy>} */ let enemies = [];
 /** @type {Array<Effect>} */ let effects = [];
 /** @type {AudioManager} */ let audio = null;
+/** @type {number} */ let score = 0;
 
 const shaders = {
     block: {
@@ -512,11 +516,8 @@ async function saveToFile(name) {
  * @param {Blob} blob 
  */
 async function load(blob) {
-    // chunks = [ new VoxelChunk() ];
-    // chunks[0].load(file.stream());
-
     let buffer;
-    const magicBytes = await blob.slice(0, 2).bytes();
+    const magicBytes = new Uint8Array(await blob.slice(0, 2).arrayBuffer());
     if (magicBytes[0] === 0x1f && magicBytes[1] == 0x8B) {
         const reader = blob.stream().pipeThrough(new DecompressionStream("gzip")).getReader();
         const decompressedData = [];
@@ -567,14 +568,15 @@ function applyScreenShake(amount) {
 function updateEntities(dt) {
     // Despawn entities in creative mode
     if (creative) {
-        if (enemies.length > 0)
+        if (enemies.length > 0) {
+            for (const enemy of enemies) {
+                enemy.exploded();
+                enemy.delete();
+            }
             enemies = [];
-        if (director) {
-            director.delete();
-            director = null;
         }
-        if (pathMap)
-            pathMap = null
+        director = null;
+        pathMap = null;
     } else {
         if (!director || !pathMap) {
             setupLevel();
@@ -656,6 +658,14 @@ function mainLoop() {
     else if (popup.style.bottom !== "" && document.pointerLockElement !== canvas)
         popup.style.bottom = "";
 
+    if (creative) {
+        scoreContainer.style.display = "none";
+    } else {
+        scoreContainer.style.display = "";
+        scoreDisplay.innerText = score;
+        multiplierDisplay.innerText = director ? director.difficulty.scoreMultiplier : 0;
+    }
+
     requestAnimationFrame(mainLoop);
 }
 
@@ -718,11 +728,17 @@ function clearLevel() {
     const chunk = new VoxelChunk();
     chunks.push(chunk);
 
-    for (let x = -3; x <= 3; x++) {
-        for (let z = -3; z <= 3; z++) {
-            chunk.setBlock(x, -1, z, VoxelChunk.blocks.bricks);
+    for (let x = -4; x <= 4; x++) {
+        for (let z = -4; z <= 4; z++) {
+            chunk.setBlock(x, -1, z, VoxelChunk.blocks.grass);
+            chunk.setBlock(x, -2, z, VoxelChunk.blocks.dirt);
+            chunk.setBlock(x, -3, z, VoxelChunk.blocks.dirt);
+            chunk.setBlock(x, -4, z, VoxelChunk.blocks.dirt);
+            chunk.setBlock(x, -5, z, VoxelChunk.blocks.dirt);
         }
     }
+
+    setupLevel();
 }
 
 function setupLevel() {
@@ -732,9 +748,18 @@ function setupLevel() {
     const centerZ = Math.floor((max[2] + min[2]) / 2);
     const radius = Math.floor(Math.max(max[0] - min[0], max[1] - min[1], max[2] - min[2]) / 2);
 
-    const y = Math.round(snapToGround(new Vector3(centerX, 100, centerZ), 0.25, 0.25, -1));
+    const y = Math.round(snapToGround(new Vector3([centerX + 0.5, 100, centerZ + 0.5]), 0.25, 0.25, -1));
     pathMap = new PathMap(centerX, y, centerZ, radius);
     director = new Director(min[0], min[1], min[2], max[0], max[1], max[2]);
+    director.position.elements[0] = centerX + 0.5;
+    director.position.elements[1] = y + 8;
+    director.position.elements[2] = centerZ + 0.5;
+
+    for (const enemy of enemies) {
+        enemy.exploded();
+        enemy.delete();
+    }
+
     enemies = [director];
 }
 
@@ -756,6 +781,9 @@ function main() {
     loadInput = document.getElementById("loadInput");
     saveInput = document.getElementById("saveInput");
     creativeCheckbox = document.getElementById("creative");
+    scoreContainer = document.getElementById("scoreContainer");
+    scoreDisplay = document.getElementById("score");
+    multiplierDisplay = document.getElementById("multiplier");
     gl = canvas.getContext("webgl");
     setupGL();
 

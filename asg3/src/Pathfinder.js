@@ -61,7 +61,7 @@ class Pathfinder {
             }
             
             if (performance.now() - startTime > 10000) {
-                console.log("Oops!");
+                console.log("Pathfinder took too long!");
                 break;
             }
         }

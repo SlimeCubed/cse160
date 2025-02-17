@@ -12,8 +12,8 @@ class Enemy {
     intersectSphere(x, y, z, radius) {
         return false;
     }
-    shot() {}
-    exploded() {}
+    shot(byPlayer) {}
+    exploded(byPlayer) {}
 }
 
 class Effect {
@@ -177,8 +177,11 @@ class Crawler extends Enemy {
         return false;
     }
 
-    shot() {
+    shot(byPlayer) {
         if (this.dead) return;
+
+        if (byPlayer)
+            score += director.difficulty.scoreMultiplier;
 
         this.dead = true;
 
@@ -208,8 +211,8 @@ class Crawler extends Enemy {
         freeVec3(v);
     }
 
-    exploded() {
-        this.shot();
+    exploded(byPlayer) {
+        this.shot(byPlayer);
     }
 
     shouldDespawn() {
@@ -231,7 +234,7 @@ class Crawler extends Enemy {
             this._checkpoint = snapToClosest(this._checkpoint, 2, 0.5, -1) || this._checkpoint;
         }
 
-        if (!this.loop) {
+        if (!this.loop && !this.dead) {
             this.loop = audio.playLoop(audio.sounds.skitter, 0, this._points[1], 1.5);
             this.loop.source.detune.value = Math.random() * 40 - 20
             this.loop.gain.gain.linearRampToValueAtTime(1, audio.time + 0.5);
@@ -579,6 +582,7 @@ class Explosion extends Effect {
         this.g = g;
         this.b = b;
         this.playerDamage = playerDamage;
+        this.byPlayer = playerDamage === 0;
 
         this.lifetime = 0.8;
         this.age = 0;
@@ -598,7 +602,7 @@ class Explosion extends Effect {
         if (this.age < 0.5) {
             for (const enemy of enemies) {
                 if (enemy.intersectSphere(p[0], p[1], p[2], this.radius)) {
-                    enemy.exploded();
+                    enemy.exploded(this.byPlayer);
                 }
             }
         }
@@ -611,6 +615,7 @@ class Explosion extends Effect {
             const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
             if (dist < this.radius + 0.25) {
                 player.hit(this.playerDamage, true);
+                this.playerDamage = 0;
             }
         }
     }
@@ -708,7 +713,7 @@ class Director extends Enemy {
         this.difficulty = this.getDifficulty(0);
 
         this._flash = 0;
-        this.position = new Vector3([0, 8, 0]);
+        this.position = new Vector3([0.5, 8, 0.5]);
         this._spawnPoints = [];
 
         this._bounds = [xMin, yMin, zMin, xMax, yMax, zMax];
@@ -754,6 +759,9 @@ class Director extends Enemy {
         this._anim += dt * Math.max(this.difficulty.level, 0.2);
         this._flash = Math.max(this._flash - dt * 0.5, 0);
 
+        if (score > this.difficulty.maxScore)
+            this.difficulty = this.getDifficulty(this.difficulty.level + 1);
+
         this._matrix.setTranslate(this.position.elements[0], this.position.elements[1], this.position.elements[2])
             .rotate(this._anim * 90, 1, 1, 1)
             .rotate(this._anim * 22, 1, 0, 0);
@@ -769,7 +777,7 @@ class Director extends Enemy {
                 this._numCrawlersBeforeNextFlier--;
             } else {
                 enemies.push(new Flier(spawnPoint));
-                this._numCrawlersBeforeNextFlier = Math.floor(Math.random() * 10);
+                this._numCrawlersBeforeNextFlier = Math.floor(Math.random() * 10) + 5;
             }
         }
     }
@@ -807,6 +815,9 @@ class Director extends Enemy {
     }
 
     shot() {
+        if (this.difficulty.level === 0)
+            score = 0;
+
         this._flash = 1;
         this.difficulty = this.getDifficulty(this.difficulty.level + 1);
         applyScreenShake(0.75);
@@ -817,21 +828,24 @@ class Director extends Enemy {
             level: newLevel,
             spawnRate: 1,
             enemySpeed: 1,
-            damageMultiplier: 1
+            damageMultiplier: 1,
+            scoreMultiplier: newLevel,
+            maxScore: 50 * (Math.pow(2, newLevel) - 1)
         };
         switch (newLevel) {
             case 0:
                 diff.spawnRate = 0;
+                diff.maxScore = Infinity;
                 break;
             case 1:
-                diff.spawnRate = 1;
+                diff.spawnRate = 0.4;
                 break;
             case 2:
-                diff.spawnRate = 1.5;
+                diff.spawnRate = 0.6;
                 diff.enemySpeed = 1.1;
                 break;
             default:
-                diff.spawnRate = 2;
+                diff.spawnRate = Math.min(0.2 + 0.2 * newLevel, 1.25);
                 diff.enemySpeed = 1.1 + (newLevel - 2) * 0.1;
                 diff.damageMultiplier = 1 + 0.25 * (newLevel - 2);
                 break;
@@ -941,15 +955,28 @@ class Director extends Enemy {
         const zMax = this._bounds[5];
         for (let x = xMin; x < xMax; x++) {
             for (let z = zMin; z < zMax; z++) {
-                if (this._isValidSpawnPoint(x, y, z))
+                if (this._isValidSpawnPoint(x, y, z, true))
                     this._spawnPoints.push(new Vector3([x + 0.5, y + 0.5, z + 0.5]));
             }
         }
+
+        if (this._spawnPoints.length === 0) {
+            for (let x = xMin; x < xMax; x++) {
+                for (let z = zMin; z < zMax; z++) {
+                    if (this._isValidSpawnPoint(x, y, z, false))
+                        this._spawnPoints.push(new Vector3([x + 0.5, y + 0.5, z + 0.5]));
+                }
+            }
+        }
+
+        if (this._spawnPoints.length === 0) {
+            this._spawnPoints.push(new Vector3([0.5, -0.5, 0.5]));
+        }
     }
 
-    _isValidSpawnPoint(x, y, z) {
+    _isValidSpawnPoint(x, y, z, needsFloor) {
         // Make sure the tile is accessible
-        if (!pathMap.isMapped(x, y, z) || !Pathfinder.obstructed(x, y - 1, z))
+        if (!pathMap.isMapped(x, y, z) || !Pathfinder.obstructed(x, y - 1, z) && needsFloor)
             return false;
 
         // Make sure there is a wall next to it to climb on
@@ -1155,8 +1182,11 @@ class Flier extends Enemy {
         return dx * dx + dy * dy + dz * dz < radius;
     }
 
-    shot() {
+    shot(byPlayer) {
         if (this.dead) return;
+
+        if (byPlayer)
+            score += 2 * director.difficulty.scoreMultiplier;
 
         this.dead = true;
 
@@ -1189,8 +1219,8 @@ class Flier extends Enemy {
         freeVec3(v);
     }
 
-    exploded() {
-        this.shot();
+    exploded(byPlayer) {
+        this.shot(byPlayer);
     }
 
     shouldDespawn() {
@@ -1201,7 +1231,7 @@ class Flier extends Enemy {
         const temp = getVec3();
         temp.set(this.velocity).mul(dt);
 
-        if (!this.loop) {
+        if (!this.loop && !this.dead) {
             this.loop = audio.playLoop(audio.sounds.flier_hum, 1, this.position, 4);
         }
         if (this.loop) {

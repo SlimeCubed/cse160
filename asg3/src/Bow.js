@@ -400,7 +400,7 @@ class Arrow
             this.position.elements[0] = x + delta.elements[0] * closestEnemyDist;
             this.position.elements[1] = y + delta.elements[1] * closestEnemyDist;
             this.position.elements[2] = z + delta.elements[2] * closestEnemyDist;
-            closestEnemy.shot();
+            closestEnemy.shot(true);
             this.stuck = true;
             this.hidden = true;
             hitAnything = true;
