@@ -103,6 +103,8 @@ const input = {
     right: false,
     up: false,
     down: false,
+    turnLeft: false,
+    turnRight: false,
     speedPlace: false,
     spherePlace: false,
     placeBlock: false,
@@ -419,6 +421,8 @@ function toggleKey(code, pressed) {
         case "KeyS": input.back = pressed; break;
         case "KeyA": input.left = pressed; break;
         case "KeyD": input.right = pressed; break;
+        case "KeyQ": input.turnLeft = pressed; break;
+        case "KeyE": input.turnRight = pressed; break;
         case "Space": input.up = pressed; break;
         case "ShiftLeft": input.down = pressed; break;
         case "Equal": input.chunksWiggle = pressed; break;
@@ -598,6 +602,12 @@ function updateEntities(dt) {
         camera.roll = (Math.random() * 2 - 1) * screenShake * 1.5;
     }
     screenShake = Math.max(screenShake - dt, 0);
+
+    // Turn camera with Q and E
+    if (input.turnLeft || input.turnRight) {
+        const rate = 180;
+        turnCamera((input.turnLeft - input.turnRight) * rate * dt, 0);
+    }
 
     // Find a good place for enemies to pathfind to
     const p = new Vector3(player.position.elements);
@@ -821,6 +831,7 @@ function main() {
             limitBreaker = null;
             loadFirstLevel();
         }
+        player.flyingSpeed = openWorldCheckbox.checked ? 16 : 8;
     });
 
     // Toggle invuln
