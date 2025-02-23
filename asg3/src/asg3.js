@@ -7,6 +7,8 @@
 /** @type {HTMLInputElement} */ let loadInput = null;
 /** @type {HTMLInputElement} */ let saveInput = null;
 /** @type {HTMLInputElement} */ let creativeCheckbox = null;
+/** @type {HTMLInputElement} */ let openWorldCheckbox = null;
+/** @type {HTMLInputElement} */ let invulnCheckbox = null;
 /** @type {HTMLDivElement} */ let scoreContainer = null;
 /** @type {HTMLSpanElement} */ let scoreDisplay = null;
 /** @type {HTMLSpanElement} */ let multiplierDisplay = null;
@@ -36,6 +38,7 @@
 /** @type {number} */ let gravity = 15;
 /** @type {VoxelChunk} */ let blockPreview = null;
 /** @type {boolean} */ let creative = false;
+/** @type {boolean} */ let invuln = false;
 /** @type {Pathfinder} */ let toPlayer = new Pathfinder(15);
 /** @type {PathMap} */ let pathMap = null;
 /** @type {Director} */ let director = null;
@@ -43,6 +46,7 @@
 /** @type {Array<Effect>} */ let effects = [];
 /** @type {AudioManager} */ let audio = null;
 /** @type {number} */ let score = 0;
+/** @type {LimitBreaker} */ let limitBreaker = null;
 
 const shaders = {
     block: {
@@ -567,7 +571,7 @@ function applyScreenShake(amount) {
 
 function updateEntities(dt) {
     // Despawn entities in creative mode
-    if (creative) {
+    if (creative || limitBreaker !== null) {
         if (enemies.length > 0) {
             for (const enemy of enemies) {
                 enemy.exploded();
@@ -604,7 +608,8 @@ function updateEntities(dt) {
     }
 
     // Update pathfinding
-    toPlayer.setDestination(p.elements[0], p.elements[1], p.elements[2]);
+    if (!creative && limitBreaker === null)
+        toPlayer.setDestination(p.elements[0], p.elements[1], p.elements[2]);
 
     // Update enemies
     let anyEnemiesDespawned = false;
@@ -636,6 +641,7 @@ function updateEntities(dt) {
     }
 
     audio.update();
+    if (limitBreaker) limitBreaker.update(dt);
 
     // Remove dead entities
     if (anyEnemiesDespawned)
@@ -763,6 +769,11 @@ function setupLevel() {
     enemies = [director];
 }
 
+function limitBreak() {
+    limitBreaker = new LimitBreaker();
+    limitBreaker.start();
+}
+
 async function loadFirstLevel() {
     const blob = await (await fetch("levels/default.voxel")).blob();
     await load(blob);
@@ -781,6 +792,8 @@ function main() {
     loadInput = document.getElementById("loadInput");
     saveInput = document.getElementById("saveInput");
     creativeCheckbox = document.getElementById("creative");
+    openWorldCheckbox = document.getElementById("openWorld");
+    invulnCheckbox = document.getElementById("invuln");
     scoreContainer = document.getElementById("scoreContainer");
     scoreDisplay = document.getElementById("score");
     multiplierDisplay = document.getElementById("multiplier");
@@ -797,6 +810,22 @@ function main() {
     // Toggle creative mode
     creativeCheckbox.addEventListener("input", function() {
         creative = creativeCheckbox.checked;
+    });
+
+    // Toggle open world mode
+    openWorldCheckbox.addEventListener("input", function() {
+        if (openWorldCheckbox.checked) {
+            limitBreak();
+        } else {
+            limitBreaker.stop();
+            limitBreaker = null;
+            loadFirstLevel();
+        }
+    });
+
+    // Toggle invuln
+    invulnCheckbox.addEventListener("input", function() {
+        invuln = invulnCheckbox.checked;
     });
 
     // Rotate camera on mouse input

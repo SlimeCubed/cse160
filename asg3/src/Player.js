@@ -175,6 +175,7 @@ class Player {
     }
 
     die() {
+        if (invuln) return;
         this.health = 0;
 
         for (const enemy of enemies) {
@@ -185,8 +186,12 @@ class Player {
             director.reset();
     }
 
-    hit(damage, ignoreInvuln) {
-        if (this.invuln && !ignoreInvuln) return;
+    hit(damage, ignoreInvuln, enemy) {
+        if (invuln && enemy) {
+            enemy.exploded();
+        }
+
+        if (this.invuln && !ignoreInvuln || invuln) return;
 
         this.health = Math.max(this.health - damage, 0);
         this.invuln = this.maxInvulnTime;

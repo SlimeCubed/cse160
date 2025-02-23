@@ -319,7 +319,7 @@ class Crawler extends Enemy {
     }
 
     attack() {
-        player.hit(this.damage * director.difficulty.damageMultiplier);
+        player.hit(this.damage * director.difficulty.damageMultiplier, false, this);
     }
 
     isTouchingPlayer() {
@@ -583,6 +583,7 @@ class Explosion extends Effect {
         this.b = b;
         this.playerDamage = playerDamage;
         this.byPlayer = playerDamage === 0;
+        this.enemy = null;
 
         this.lifetime = 0.8;
         this.age = 0;
@@ -614,7 +615,7 @@ class Explosion extends Effect {
 
             const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
             if (dist < this.radius + 0.25) {
-                player.hit(this.playerDamage, true);
+                player.hit(this.playerDamage, true, this.enemy);
                 this.playerDamage = 0;
             }
         }
@@ -777,7 +778,7 @@ class Director extends Enemy {
                 this._numCrawlersBeforeNextFlier--;
             } else {
                 enemies.push(new Flier(spawnPoint));
-                this._numCrawlersBeforeNextFlier = Math.floor(Math.random() * 10) + 5;
+                this._numCrawlersBeforeNextFlier = Math.floor(Math.random() * 8) + 4;
             }
         }
     }
@@ -856,7 +857,7 @@ class Director extends Enemy {
 
     reset() {
         this.difficulty = this.getDifficulty(0);
-        this._numCrawlersBeforeNextFlier = 20;
+        this._numCrawlersBeforeNextFlier = 15;
     }
 
     _buildMesh() {
@@ -1341,7 +1342,9 @@ class Flier extends Enemy {
         const sound = audio.playPositioned(audio.sounds["boom_" + randomInt(0, 3)], 0.4, this.position, 10);
         sound.source.detune.value = -1200 + Math.random() * 500;
 
-        effects.push(new Explosion(this.laserTarget, this.explosionRadius, 1, 0.5, 0.8, this.damage));
+        const explosion = new Explosion(this.laserTarget, this.explosionRadius, 1, 0.5, 0.8, this.damage);
+        explosion.enemy = this;
+        effects.push(explosion);
 
         this.laserTarget = null;
     }

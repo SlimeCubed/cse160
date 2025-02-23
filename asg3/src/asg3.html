@@ -59,7 +59,7 @@
                 border-width: 0;
                 border-radius: 3px;
             }
-            .creative-toggle {
+            .toggle-container {
                 margin-bottom: 10px;
             }
         </style>
@@ -106,8 +106,14 @@
                 </tr>
             </table>
             <h2>Tools</h2>
-            <div class="creative-toggle">
+            <div class="toggle-container">
                 <label for="creative"><strong>Creative Mode</strong></label><input id="creative" type="checkbox">
+            </div>
+            <div class="toggle-container">
+                <label for="openWorld"><strong>Open World</strong></label><input id="openWorld" type="checkbox">
+            </div>
+            <div class="toggle-container">
+                <label for="invuln"><strong>Invincibility</strong></label><input id="invuln" type="checkbox">
             </div>
             <button onclick="clearLevel()">CLEAR</button>
             <button onclick="if (loadInput) loadInput.click()">LOAD</button><input id="loadInput" type="file" accept=".voxel" hidden/>
@@ -127,6 +133,7 @@
         <script src="Pathfinder.js"></script>
         <script src="Enemies.js"></script>
         <script src="Bow.js"></script>
+        <script src="LimitBreaker.js"></script>
         <script src="asg3.js"></script>
     </body>
 </html>

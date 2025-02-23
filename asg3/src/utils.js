@@ -144,6 +144,12 @@ function moveAndCollide(x, y, z, sx, sy, sz, dx, dy, dz) {
     return result;
 }
 
+function intersectAABBs(xMinA, yMinA, zMinA, xMaxA, yMaxA, zMaxA, xMinB, yMinB, zMinB, xMaxB, yMaxB, zMaxB) {
+    return xMaxA >= xMinB && xMaxB >= xMinA
+        && yMaxA >= yMinB && yMaxB >= yMinA
+        && zMaxA >= zMinB && zMaxB >= zMinA;
+}
+
 /**
  * Given a ray origin and direction, returns the distance to a plane on the Z-axis;
  * @param {number} x 
@@ -369,7 +375,7 @@ function chooseRandom(list) {
 
 function randomInt(minInclusive, maxExclusive) {
     const size = maxExclusive - minInclusive;
-    return Math.min(Math.floor(Math.random() * size), size - 1);
+    return Math.min(Math.floor(Math.random() * size), size - 1) + minInclusive;
 }
 
 function getMat4() {

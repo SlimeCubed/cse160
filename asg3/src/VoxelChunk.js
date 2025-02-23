@@ -57,6 +57,7 @@ void main() {
 }
 `;
 
+const sectionSize = 16;
 class VoxelChunk
 {
     static blocks = {
@@ -131,18 +132,53 @@ class VoxelChunk
 
     constructor() {
         this._data = [];
+        /** @type {Map<number, Float32Array>} */ this._sectionVertexData = new Map();
+        /** @type {Set<number>} */ this._dirtySectionIndices = new Set();
         this._size = [0, 0, 0];
         this._origin = [0, 0, 0];
         this._buffer = gl.createBuffer();
-        this._meshDirty = true;
         this._vertexCount = 0;
         this._modelMatrix = new Matrix4();
+        this._everRendered = false;
         this.position = new Vector3();
     }
 
-    static _data = [];
-    _rebuildMesh() {
-        const data = VoxelChunk._data;
+    static _getSectionMinMax(sx, sy, sz) {
+        return [
+            [sx * sectionSize, sy * sectionSize, sz * sectionSize],
+            [(sx + 1) * sectionSize, (sy + 1) * sectionSize, (sz + 1) * sectionSize]
+        ];
+    }
+
+    static _getSectionIndex(sx, sy, sz) {
+        const r = 200000; // Approximately cbrt(MAX_SAFE_INTEGER)
+        const o = 100000;
+        sx += o;
+        sy += o;
+        sz += o;
+        return sx + (sy + sz * r) * r;
+    }
+
+    static _getSectionCoord(i) {
+        const r = 200000;
+        const o = 100000;
+        const sz = Math.floor(i / r / r) - o;
+        const sy = Math.floor(i / r % r) - o;
+        const sx = Math.floor(i % r) - o;
+        return [sx, sy, sz];
+    }
+
+    _getSectionVertexData(sx, sy, sz) {
+        return this._sectionVertexData.get(VoxelChunk._getSectionIndex(sx, sy, sz));
+    }
+
+    _setSectionVertexData(sx, sy, sz, data) {
+        this._sectionVertexData.set(VoxelChunk._getSectionIndex(sx, sy, sz), data);
+    }
+
+    static _scratchData = [];
+    _updateSectionVertexData(sx, sy, sz) {
+        const data = VoxelChunk._scratchData;
         const normal = new Vector3();
         const tangent = new Vector3();
         const bitangent = new Vector3();
@@ -168,13 +204,15 @@ class VoxelChunk
             data[dataInd++] = dark ? 0.5 : 1;
         }
 
+        const [chunkMin, chunkMax] = VoxelChunk._getSectionMinMax(sx, sy, sz);
+
         // Loop through all blocks
-        const minX = this._origin[0];
-        const minY = this._origin[1];
-        const minZ = this._origin[2];
-        const maxX = minX + this._size[0];
-        const maxY = minY + this._size[1];
-        const maxZ = minZ + this._size[2];
+        const minX = Math.max(this._origin[0], chunkMin[0]);
+        const minY = Math.max(this._origin[1], chunkMin[1]);
+        const minZ = Math.max(this._origin[2], chunkMin[2]);
+        const maxX = Math.min(minX + this._size[0], chunkMax[0]);
+        const maxY = Math.min(minY + this._size[1], chunkMax[1]);
+        const maxZ = Math.min(minZ + this._size[2], chunkMax[2]);
         for (let z = minZ; z < maxZ; z++) {
             for (let y = minY; y < maxY; y++) {
                 for (let x = minX; x < maxX; x++) {
@@ -250,11 +288,36 @@ class VoxelChunk
                 }
             }
         }
-        this._vertexCount = dataInd / 11;
 
-        // Upload into buffer
+        this._setSectionVertexData(sx, sy, sz, new Float32Array(data.slice(0, dataInd)));
+    }
+
+    _uploadVertexData() {
+        let byteLength = 0;
+        for (const vertexData of this._sectionVertexData.values()) {
+            byteLength += vertexData.byteLength;
+        }
+
         gl.bindBuffer(gl.ARRAY_BUFFER, this._buffer);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.slice(0, dataInd)), gl.STATIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, byteLength, gl.STATIC_DRAW);
+
+        let bytesWritten = 0;
+        for (const vertexData of this._sectionVertexData.values()) {
+            if (vertexData.length > 0) {
+                gl.bufferSubData(gl.ARRAY_BUFFER, bytesWritten, vertexData);
+                bytesWritten += vertexData.byteLength;
+            }
+        }
+
+        this._vertexCount = bytesWritten / Float32Array.BYTES_PER_ELEMENT / 11;
+    }
+
+    _rebuildMesh() {
+        for (const i of this._dirtySectionIndices) {
+            const [sx, sy, sz] = VoxelChunk._getSectionCoord(i);
+            this._updateSectionVertexData(sx, sy, sz);
+        }
+        this._uploadVertexData();
     }
 
     setModelMatrix(mat) {
@@ -262,9 +325,14 @@ class VoxelChunk
     }
 
     render() {
-        if (this._meshDirty) {
+        if (!this._everRendered) {
+            this._everRendered = true;
+            this._markAllDirty();
+        }
+
+        if (this._dirtySectionIndices.size > 0) {
             this._rebuildMesh();
-            this._meshDirty = false;
+            this._dirtySectionIndices.clear();
         }
 
         const temp = getMat4();
@@ -367,17 +435,27 @@ class VoxelChunk
         const index = lx + (ly + lz * this._size[1]) * this._size[0];
         if (this._data[index] != id) {
             this._data[index] = id;
-            this._meshDirty = true;
+            if (this._everRendered)
+                this._markBlockDirty(x, y, z);
+        }
+    }
+
+    _markBlockDirty(x, y, z) {
+        for (let ox = -1; ox <= 1; ox++) {
+            for (let oy = -1; oy <= 1; oy++) {
+                for (let oz = -1; oz <= 1; oz++) {
+                    const i = VoxelChunk._getSectionIndex(
+                        Math.floor((x + ox) / sectionSize),
+                        Math.floor((y + oy) / sectionSize),
+                        Math.floor((z + oz) / sectionSize)
+                    );
+                    this._dirtySectionIndices.add(i);
+                }
+            }
         }
     }
 
     getBlock(x, y, z) {
-        if (typeof x !== "number") {
-            z = x.elements[2];
-            y = x.elements[1];
-            x = x.elements[0];
-        }
-
         const lx = x - this._origin[0];
         const ly = y - this._origin[1];
         const lz = z - this._origin[2];
@@ -455,50 +533,27 @@ class VoxelChunk
         for (let i = 0; i < count; i++)
             this._data[i] = view.getUint8(12 + i);
 
-        this._meshDirty = true;
+        this._markAllDirty();
 
         return 12 + this._size[0] * this._size[1] * this._size[2];
     }
 
-    async save(name) {
+    _markAllDirty() {
+        const minSectionX = Math.floor(this._origin[0] / sectionSize);
+        const minSectionY = Math.floor(this._origin[1] / sectionSize);
+        const minSectionZ = Math.floor(this._origin[2] / sectionSize);
+        const maxSectionX = Math.ceil((this._origin[0] + this._size[0]) / sectionSize);
+        const maxSectionY = Math.ceil((this._origin[1] + this._size[1]) / sectionSize);
+        const maxSectionZ = Math.ceil((this._origin[2] + this._size[2]) / sectionSize);
 
-        const reader = new Blob([serialize()]).stream().pipeThrough(new CompressionStream("deflate")).getReader();
-        const chunks = [];
-        let chunk;
-        let length = 0;
-        while (!(chunk = await reader.read()).done) {
-            chunks.push(chunk.value);
-            length += chunk.value.length;
+        for (let z = minSectionZ; z < maxSectionZ; z++) {
+            for (let y = minSectionY; y < maxSectionY; y++) {
+                for (let x = minSectionX; x < maxSectionX; x++) {
+                    const i = VoxelChunk._getSectionIndex(x, y, z);
+                    this._dirtySectionIndices.add(i);
+                }
+            }
         }
-
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(new Blob(chunks));
-        link.download = name;
-        link.click();
-    }
-
-    async load(stream) {
-        const reader = stream.pipeThrough(new DecompressionStream("deflate")).getReader();
-        let chunk;
-        let i = 0;
-        const header = new ArrayBuffer(2 * 6);
-        const headerView = new DataView(header);
-        while (!(chunk = await reader.read()).done) {
-            let chunkI = 0;
-
-            while (i < header.byteLength && chunkI < chunk.value.length)
-                headerView.setUint8(i++, chunk.value[chunkI++]);
-
-            while (chunkI < chunk.value.length)
-                this._data[i++ - header.byteLength] = chunk.value[chunkI++];
-        }
-
-        for (let i = 0; i < 3; i++) {
-            this._size[i] = headerView.getUint16(i * 2);
-            this._origin[i] = headerView.getInt16(i * 2 + 6);
-        }
-
-        this._meshDirty = true;
     }
 
     // Adapted from http://www.cs.yorku.ca/~amana/research/grid.pdf
@@ -604,6 +659,15 @@ class VoxelChunk
         const dir = Math.sign(endZ - z);
         if (dir === 0) return endZ;
 
+        if (!intersectAABBs(
+            this._origin[0], this._origin[1], this._origin[2],
+            this._origin[0] + this._size[0], this._origin[1] + this._size[1], this._origin[2] + this._size[2],
+            xMin, yMin, Math.min(z, endZ),
+            xMax, yMax, Math.max(z, endZ))
+        ) {
+            return endZ;
+        }
+
         xMin = Math.max(Math.floor(xMin), this._origin[0]);
         xMax = Math.min(Math.floor(xMax) + 1, this._origin[0] + this._size[0]);
         yMin = Math.max(Math.floor(yMin), this._origin[1]);
@@ -630,6 +694,15 @@ class VoxelChunk
         const dir = Math.sign(endY - y);
         if (dir === 0) return endY;
 
+        if (!intersectAABBs(
+            this._origin[0], this._origin[1], this._origin[2],
+            this._origin[0] + this._size[0], this._origin[1] + this._size[1], this._origin[2] + this._size[2],
+            xMin, Math.min(y, endY), zMin,
+            xMax, Math.max(y, endY), zMax)
+        ) {
+            return endY;
+        }
+
         xMin = Math.max(Math.floor(xMin), this._origin[0]);
         xMax = Math.min(Math.floor(xMax) + 1, this._origin[0] + this._size[0]);
         zMin = Math.max(Math.floor(zMin), this._origin[2]);
@@ -655,6 +728,15 @@ class VoxelChunk
     castRectX(x, endX, yMin, yMax, zMin, zMax) {
         const dir = Math.sign(endX - x);
         if (dir === 0) return endX;
+
+        if (!intersectAABBs(
+            this._origin[0], this._origin[1], this._origin[2],
+            this._origin[0] + this._size[0], this._origin[1] + this._size[1], this._origin[2] + this._size[2],
+            Math.min(x, endX), yMin, zMin,
+            Math.max(x, endX), yMax, zMax)
+        ) {
+            return endX;
+        }
 
         yMin = Math.max(Math.floor(yMin), this._origin[1]);
         yMax = Math.min(Math.floor(yMax) + 1, this._origin[1] + this._size[1]);
