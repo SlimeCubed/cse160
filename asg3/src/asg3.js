@@ -787,7 +787,6 @@ function limitBreak() {
 async function loadFirstLevel() {
     const blob = await (await fetch("levels/default.voxel")).blob();
     await load(blob);
-    requestAnimationFrame(mainLoop);
 
     player.flying = false;
     player.position.elements[0] = 0;
@@ -829,7 +828,12 @@ function main() {
         } else {
             limitBreaker.stop();
             limitBreaker = null;
-            loadFirstLevel();
+            loadFirstLevel()
+                .then(() => {
+                    if (director) director.delete();
+                    director = null;
+                    pathMap = null;
+                });
         }
         player.flyingSpeed = openWorldCheckbox.checked ? 16 : 8;
     });
@@ -902,5 +906,7 @@ function main() {
     window.addEventListener("resize", resize);
     resize();
 
-    loadFirstLevel();
+    loadFirstLevel().then(function() {
+        requestAnimationFrame(mainLoop);
+    });
 }
