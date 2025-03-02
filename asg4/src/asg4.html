@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>Assignment 4: Lighting</title>
+        <style>
+            body {
+                margin: 0;
+                overflow: hidden;
+            }
+            .popup {
+                position: fixed;
+                right: 20px;
+                bottom: 20px;
+                padding: 20px;
+                background-color: rgba(0, 0, 0, 0.25);
+                color: #DDD;
+                font-family: Arial, Helvetica, sans-serif;
+            }
+            .cursor {
+                position: fixed;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                top: 0;
+                text-align: center;
+                pointer-events: none;
+                line-height: 100vh;
+                color: white;
+            }
+            td:nth-child(1) {
+                text-align: right;
+            }
+            td {
+                padding: 0px 10px 0px 10px;
+            }
+            .header {
+                text-align: center !important;
+            }
+            .header > p {
+                margin-bottom: 4px;
+                font-weight: bold;
+            }
+        </style>
+    </head>
+
+    <body onload="main()">
+        <canvas id="webgl" width="400" height="400">
+            Please use the browser supporting "canvas".
+        </canvas>
+        <div class="popup">
+            <div>
+                <h3>Click and drag to move the lights!</h3>
+            </div>
+            <table>
+                <tr>
+                    <td><label for="show-normals">Show Normals</label></td>
+                    <td><input type="checkbox" name="show-normals" id="show-normals"/></td>
+                </tr>
+                <tr>
+                    <td><label for="lighting">Lighting</label></td>
+                    <td><input type="checkbox" name="lighting" id="lighting" checked="true"/></td>
+                </tr>
+                <tr>
+                    <td><label for="animate-light">Animate Light</label></td>
+                    <td><input type="checkbox" name="animate-light" id="animate-light"/></td>
+                </tr>
+
+                <!-- Sphere -->
+                <tr>
+                    <td class="header" colspan="2"><p>Material</p></td>
+                </tr>
+                <tr>
+                    <td><label for="sphere-red">Red</label></td>
+                    <td><input type="range" name="sphere-red" id="sphere-color-0" value="0.5" min="0" max="1" step="any"/></td>
+                </tr>
+                <tr>
+                    <td><label for="sphere-green">Green</label></td>
+                    <td><input type="range" name="sphere-green" id="sphere-color-1" value="0.5" min="0" max="1" step="any"/></td>
+                </tr>
+                <tr>
+                    <td><label for="sphere-blue">Blue</label></td>
+                    <td><input type="range" name="sphere-blue" id="sphere-color-2" value="0.5" min="0" max="1" step="any"/></td>
+                </tr>
+                <tr>
+                    <td><label for="diffuse">Diffuse Amount</label></td>
+                    <td><input type="range" name="diffuse" id="diffuse" value="0.5" min="0" max="1" step="any"/></td>
+                </tr>
+                <tr>
+                    <td><label for="specular">Specular Amount</label></td>
+                    <td><input type="range" name="specular" id="specular" value="0.5" min="0" max="1" step="any"/></td>
+                </tr>
+                <tr>
+                    <td><label for="specular-size">Specular Size</label></td>
+                    <td><input type="range" name="specular-size" id="specular-size" value="0.2" min="0" max="1" step="any"/></td>
+                </tr>
+
+                <!-- Point Light -->
+                <tr>
+                    <td class="header" colspan="2"><p>Point Light</p></td>
+                </tr>
+                <tr>
+                    <td><label for="intensity">Intensity</label></td>
+                    <td><input type="range" name="intensity" id="intensity" value="0.7" min="0" max="1" step="any"/></td>
+                </tr>
+                <tr>
+                    <td><label for="red">Red</label></td>
+                    <td><input type="range" name="red" id="color-0" value="0.1" min="0" max="1" step="any"/></td>
+                </tr>
+                <tr>
+                    <td><label for="green">Green</label></td>
+                    <td><input type="range" name="green" id="color-1" value="0.3" min="0" max="1" step="any"/></td>
+                </tr>
+                <tr>
+                    <td><label for="blue">Blue</label></td>
+                    <td><input type="range" name="blue" id="color-2" value="1" min="0" max="1" step="any"/></td>
+                </tr>
+
+                <!-- Spot Light -->
+                <tr>
+                    <td class="header" colspan="2"><p>Spot Light</p></td>
+                </tr>
+                <tr>
+                    <td><label for="spot-size">Angle</label></td>
+                    <td><input type="range" name="spot-size" id="spot-size" value="0.15" min="0" max="0.999" step="any"/></td>
+                </tr>
+                <tr>
+                    <td><label for="spot-intensity">Intensity</label></td>
+                    <td><input type="range" name="spot-intensity" id="spot-intensity" value="0.9" min="0" max="1" step="any"/></td>
+                </tr>
+                <tr>
+                    <td><label for="spot-red">Red</label></td>
+                    <td><input type="range" name="spot-red" id="spot-color-0" value="1" min="0" max="1" step="any"/></td>
+                </tr>
+                <tr>
+                    <td><label for="spot-green">Green</label></td>
+                    <td><input type="range" name="spot-green" id="spot-color-1" value="0.3" min="0" max="1" step="any"/></td>
+                </tr>
+                <tr>
+                    <td><label for="spot-blue">Blue</label></td>
+                    <td><input type="range" name="spot-blue" id="spot-color-2" value="0.15" min="0" max="1" step="any"/></td>
+                </tr>
+                
+                <!-- Ambient -->
+                <tr>
+                    <td class="header" colspan="2"><p>Ambient</p></td>
+                </tr>
+                <tr>
+                    <td><label for="ambient-red">Red</label></td>
+                    <td><input type="range" name="ambient-red" id="ambient-color-0" value="0.2" min="0" max="1" step="any"/></td>
+                </tr>
+                <tr>
+                    <td><label for="ambient-green">Green</label></td>
+                    <td><input type="range" name="ambient-green" id="ambient-color-1" value="0.2" min="0" max="1" step="any"/></td>
+                </tr>
+                <tr>
+                    <td><label for="ambient-blue">Blue</label></td>
+                    <td><input type="range" name="ambient-blue" id="ambient-color-2" value="0.3" min="0" max="1" step="any"/></td>
+                </tr>
+            </table>
+        </div>
+        <div class="cursor">☼</div>
+        <script src="../lib/cuon-matrix-cse160.js"></script>
+        <script src="../lib/cuon-utils.js"></script>
+        <script src="utils.js"></script>
+        <script src="Camera.js"></script>
+        <script src="VoxelChunk.js"></script>
+        <script src="Skybox.js"></script>
+        <script src="Water.js"></script>
+        <script src="Player.js"></script>
+        <script src="Sphere.js"></script>
+        <script src="Light.js"></script>
+        <script src="asg4.js"></script>
+    </body>
+</html>
