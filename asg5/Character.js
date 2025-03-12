@@ -2,8 +2,16 @@ import * as THREE from "three";
 import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
 
 class Character {
+    static onlineMat = null;
+
     /** @type {} */
     constructor(game, gltf, pos, online = false) {
+        if (!Character.onlineMat) {
+            Character.onlineMat = new THREE.MeshBasicMaterial({
+                color: 0xDDDDFF
+            });
+        }
+
         this.game = game;
         this.online = online;
 
@@ -49,9 +57,7 @@ class Character {
                     changeMat(child, mat);
             }
             
-            const mat = new THREE.MeshBasicMaterial({
-                color: 0xDDDDFF
-            });
+            const mat = Character.onlineMat;
             changeMat(this.model, mat);
 
             this.particleModel = new THREE.Mesh(new THREE.TetrahedronGeometry(0.1), mat);

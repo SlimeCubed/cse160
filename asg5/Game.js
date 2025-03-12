@@ -30,7 +30,9 @@ class Game {
         const renderer = new THREE.WebGLRenderer({
             antialias: true
         });
+        renderer.debug.checkShaderErrors = false;
         renderer.shadowMap.enabled = true;
+        renderer.shadowMap.autoUpdate = false;
 
         // Set up controls
         const controls = new OrbitControls(camera, renderer.domElement);
@@ -237,6 +239,7 @@ class Game {
         this.moonLight.position.z += -1 * 10;
         
         //this.renderer.render(this.scene, this.camera);
+        this.renderer.shadowMap.needsUpdate = true;
         this.effectComposer.render(dt);
     }
 
