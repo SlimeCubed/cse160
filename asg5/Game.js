@@ -53,6 +53,7 @@ class Game {
         sky.colorSpace = THREE.SRGBColorSpace;
         scene.background = sky;
         scene.backgroundIntensity = 0.1;
+        scene.fog = new THREE.FogExp2(0x131312, 0.01);
 
         for (let flip = 0; flip < 2; flip++) {
             for (let x = -10; x <= 10; x++) {
