@@ -1,6 +1,13 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { BloomPass } from "three/addons/postprocessing/BloomPass.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+import { SavePass } from "three/addons/postprocessing/SavePass.js";
+import { TexturePass } from "three/addons/postprocessing/TexturePass.js";
+import { ClearPass } from "three/addons/postprocessing/ClearPass.js";
 import { Character } from "./Character.js";
 import { Networker } from "./Networker.js";
 
@@ -113,6 +120,35 @@ class Game {
         this.camera = camera;
         this.renderer = renderer;
         this.controls = controls;
+        this.networker = new Networker(this);
+
+        // Set up post processing effects
+        renderer.autoClearDepth = false;
+        this.screenSize = new THREE.Vector2();
+        this.renderer.getDrawingBufferSize(this.screenSize);
+        this.bloomRt = new THREE.RenderTarget(this.screenSize.x, this.screenSize.y, { colorSpace: THREE.SRGBColorSpace, format: THREE.RGBAFormat });
+        this.effectComposer = new EffectComposer(renderer);
+        
+        // Render whole scene to texture
+        const mainRenderPass = new RenderPass(this.scene, camera);
+        mainRenderPass.clear = true;
+        mainRenderPass.clearDepth = true;
+        this.effectComposer.addPass(new ClearPass());
+        this.effectComposer.addPass(mainRenderPass);
+        this.effectComposer.addPass(new SavePass(this.bloomRt));
+
+        // Render just networked players to bloom texture
+        const renderBloomPass = new RenderPass(this.networker.netPlayerGroup, camera, null, 0, 0);
+        renderBloomPass.clear = true;
+        renderBloomPass.clearDepth = true;
+        this.effectComposer.addPass(renderBloomPass);
+        this.effectComposer.addPass(new BloomPass(2, 25, 5));
+
+        // Combine render targets
+        const texturePass = new TexturePass(this.bloomRt.texture, 1);
+        texturePass.material.blending = THREE.AdditiveBlending;
+        this.effectComposer.addPass(texturePass);
+        this.effectComposer.addPass(new OutputPass());
 
         this.time = performance.now();
         this.freeCam = false;
@@ -121,7 +157,6 @@ class Game {
         this.player.addToScene(scene);
 
         this.addClickListeners();
-        this.networker = new Networker(this);
     }
 
     addClickListeners() {
@@ -152,10 +187,15 @@ class Game {
             if (event.key === "v") {
                 this.freeCam = !this.freeCam;
             }
+            if (event.code === "Space") {
+                this.player.wave();
+                this.networker.wave();
+            }
         });
     }
 
     resize(width, height) {
+        this.effectComposer.setSize(width, height);
         this.renderer.setSize(width, height);
         this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();
@@ -165,6 +205,11 @@ class Game {
         const time = performance.now() / 1000;
         const dt = time - this.time;
         this.time = time;
+
+        this.renderer.getDrawingBufferSize(this.screenSize);
+        if (this.bloomRt.width !== this.screenSize.x || this.bloomRt.height !== this.screenSize.y) {
+            this.bloomRt.setSize(this.screenSize.x, this.screenSize.y);
+        }
 
         this.networker.update(dt);
         this.player.update(dt);
@@ -190,7 +235,9 @@ class Game {
         this.moonLight.position.x += 1 * 10;
         this.moonLight.position.y += 3 * 10;
         this.moonLight.position.z += -1 * 10;
-        this.renderer.render(this.scene, this.camera);
+        
+        //this.renderer.render(this.scene, this.camera);
+        this.effectComposer.render(dt);
     }
 
     enableBackfaceCulling(node) {

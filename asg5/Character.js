@@ -13,6 +13,7 @@ class Character {
         this.clips = {
             idle: this.anims.clipAction(THREE.AnimationClip.findByName(gltf.animations, online ? "Idle" : "IdleHold")),
             walk: this.anims.clipAction(THREE.AnimationClip.findByName(gltf.animations, online ? "Walk" : "WalkHold")),
+            wave: this.anims.clipAction(THREE.AnimationClip.findByName(gltf.animations, online ? "Wave" : "WaveHold")),
         };
 
         this.clips.idle.play();
@@ -20,6 +21,8 @@ class Character {
         this.clips.idle.weight = 1;
         this.clips.walk.weight = 1;
         this.clips.walk.timeScale = 1.85;
+        this.clips.wave.setLoop(THREE.LoopOnce, 0);
+        this.clips.wave.timeScale = 1.2;
         this.raycaster = new THREE.Raycaster();
         this.raycaster.far = 100;
         this.mouseRaycaster = new THREE.Raycaster();
@@ -30,6 +33,8 @@ class Character {
         this.lastGoodPos.copy(this.model.position);
         this.speed = 3;
         this.targetAngle = 0;
+        this.shownHint = false;
+        this.showingHint = false;
 
         this.particles = new THREE.Group();
         this.particleTimer = 0;
@@ -98,7 +103,7 @@ class Character {
 
         // Glow
         const light = new THREE.PointLight(0xFFEEDD, 2, 20);
-        light.shadow.bias = -0.0001;
+        light.shadow.bias = -0.001;
         light.shadow.mapSize.set(128, 128);
         light.shadow.camera.near = 0.05;
         light.shadow.camera.updateProjectionMatrix();
@@ -181,7 +186,28 @@ class Character {
             }
         }
 
+        // Show wave hint
+        if (!this.online && !this.shownHint) {
+            for (const player of this.game.networker.netPlayers.values()) {
+                if (this.model.position.distanceTo(player.model.position) < 6) {
+                    this.showHint();
+                    break;
+                }
+            }
+        }
+
         this.snapToGround();
+    }
+
+    showHint() {
+        this.shownHint = true;
+        this.showingHint = true;
+        document.getElementById("hint").classList.remove("hint-hidden");
+    }
+
+    hideHint() {
+        this.showingHint = false;
+        document.getElementById("hint").classList.add("hint-hidden");
     }
 
     snapToGround() {
@@ -209,6 +235,7 @@ class Character {
     }
 
     moveToPoint(point) {
+        this.clips.wave.stop();
         if (this.target === null) {
             this.clips.idle.enabled = true;
             this.clips.walk.enabled = true;
@@ -217,6 +244,18 @@ class Character {
         }
         this.target = point.clone();
         this.targetAngle = Math.atan2(this.target.x - this.model.position.x, this.target.z - this.model.position.z);
+    }
+
+    wave() {
+        if (this.target)
+            this.stopWalking();
+
+        this.clips.wave.weight = 1000;
+        this.clips.wave.reset();
+        this.clips.wave.play();
+
+        if (!this.online && this.showingHint)
+            this.hideHint();
     }
 
     teleportToPoint(point) {

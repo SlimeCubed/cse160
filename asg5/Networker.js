@@ -10,6 +10,8 @@ class Networker {
         this.wsServerUrl = "wss://webrtc-multiplayer-demo.glitch.me/";
         this.ws = null;
         this.netPlayers = new Map();
+        this.netPlayerGroup = new THREE.Group();
+        this.game.scene.add(this.netPlayerGroup);
         this.connect();
     }
 
@@ -19,6 +21,10 @@ class Networker {
 
     teleportTo(pos) {
         this.send({ type: "teleport", x: pos.x, y: pos.y, z: pos.z });
+    }
+
+    wave() {
+        this.send({ type: "wave" });
     }
 
     send(msg) {
@@ -39,13 +45,18 @@ class Networker {
                 const pos = new THREE.Vector3(msg.x, msg.y, msg.z);
                 if (!player) {
                     player = new Character(this.game, this.game.characterGltf, pos, true);
-                    player.addToScene(this.game.scene);
+                    player.addToScene(this.netPlayerGroup);
                     this.netPlayers.set(msg.id, player);
                 } else if (msg.type === "walk") {
                     player.moveToPoint(pos);
                 } else if (msg.type === "teleport") {
                     player.teleportToPoint(pos);
                 }
+                break;
+
+            case "wave":
+                if (player)
+                    player.wave();
                 break;
 
             case "leave":
